@@ -1172,7 +1172,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 updateKeybindDisplay(activeState)
             end
             
-            updateKeybindDisplay()
+            updateKeybindDisplay(state)
             
             local modePopup = create("Frame", {
                 Size = UDim2.new(0, 70, 0, 0),
@@ -1222,7 +1222,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 
                 mBtn.MouseButton1Click:Connect(function()
                     currentMode = modeName
-                    updateKeybindDisplay()
+                    updateKeybindDisplay(state)
                     modePopup.Visible = false
                 end)
             end
@@ -1254,14 +1254,14 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                         binding = false
                         conn:Disconnect()
                         keybindBtn.TextColor3 = Color3.fromRGB(170, 170, 185)
-                        updateKeybindDisplay()
+                        updateKeybindDisplay(state)
                         if keyCallback then pcall(keyCallback, currentKey) end
                     elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 or input.UserInputType == Enum.UserInputType.MouseButton3 then
                         currentKey = input.UserInputType
                         binding = false
                         conn:Disconnect()
                         keybindBtn.TextColor3 = Color3.fromRGB(170, 170, 185)
-                        updateKeybindDisplay()
+                        updateKeybindDisplay(state)
                         if keyCallback then pcall(keyCallback, currentKey) end
                     end
                 end)
