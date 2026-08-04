@@ -370,8 +370,10 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         
         if displayText ~= "" then
             local activeState = (isActive == true) or (modeText == "Always")
-            local nameColor = activeState and Color3.fromRGB(245, 245, 250) or Color3.fromRGB(160, 160, 175)
-            local valColor = activeState and Color3.fromRGB(245, 195, 68) or Color3.fromRGB(120, 120, 135)
+            
+            -- Linoria style dynamic colors: Bright white text when active, subtle dark gray when inactive
+            local nameColor = activeState and Color3.fromRGB(245, 245, 250) or Color3.fromRGB(140, 140, 155)
+            local valColor = activeState and Color3.fromRGB(245, 195, 68) or Color3.fromRGB(110, 110, 125)
             
             if not activeKeybinds[name] then
                 local row = create("Frame", {
@@ -1413,6 +1415,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = pickerPopup
             })
             
+            local lastColorFire = 0
             local function updateColor(h, s, v, source)
                 currentH, currentS, currentV = h or currentH, s or currentS, v or currentV
                 currentColor = Color3.fromHSV(currentH, currentS, currentV)
@@ -1423,11 +1426,16 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     hexInput.Text = "#" .. currentColor:ToHex():upper()
                 end
                 
-                if colorCallback then pcall(colorCallback, currentColor) end
+                -- Throttled callback execution to prevent BAC rate-limit bans during continuous dragging
+                local now = os.clock()
+                if now - lastColorFire >= 0.05 or source == "release" or source == "hex" then
+                    lastColorFire = now
+                    if colorCallback then pcall(colorCallback, currentColor) end
+                end
             end
             
             -- Initial color setup call
-            updateColor(currentH, currentS, currentV)
+            updateColor(currentH, currentS, currentV, "init")
             
             local draggingSatVal = false
             satValMap.InputBegan:Connect(function(input)
@@ -1456,6 +1464,9 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             
             UserInputService.InputEnded:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    if draggingSatVal or draggingHue then
+                        updateColor(currentH, currentS, currentV, "release")
+                    end
                     draggingSatVal = false
                     draggingHue = false
                 end
@@ -1595,8 +1606,9 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         
         local val = defaultVal
         local dragging = false
+        local lastSliderFire = 0
         
-        local function updateSlider(inputPos)
+        local function updateSlider(inputPos, isRelease)
             local absPos = trackFrame.AbsolutePosition.X
             local absSize = trackFrame.AbsoluteSize.X
             local relX = math.clamp((inputPos - absPos) / absSize, 0, 1)
@@ -1607,25 +1619,32 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             fillFrame.Size = UDim2.new(newRatio, 0, 1, 0)
             valueLbl.Text = tostring(val) .. suffix
             
-            if callback then pcall(callback, val) end
+            local now = os.clock()
+            if now - lastSliderFire >= 0.04 or isRelease then
+                lastSliderFire = now
+                if callback then pcall(callback, val) end
+            end
         end
         
         trackFrame.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                 dragging = true
-                updateSlider(input.Position.X)
+                updateSlider(input.Position.X, false)
             end
         end)
         
         UserInputService.InputEnded:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                if dragging then
+                    updateSlider(input.Position.X, true)
+                end
                 dragging = false
             end
         end)
         
         UserInputService.InputChanged:Connect(function(input)
             if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                updateSlider(input.Position.X)
+                updateSlider(input.Position.X, false)
             end
         end)
         
