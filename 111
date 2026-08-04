@@ -36,8 +36,6 @@ local Players = safeClone("Players")
 local UserInputService = safeClone("UserInputService")
 local TweenService = safeClone("TweenService")
 local RunService = safeClone("RunService")
-local StatsService = nil
-pcall(function() StatsService = safeClone("Stats") end)
 
 local CoreGui = nil
 pcall(function()
@@ -84,6 +82,10 @@ end
 local function create(className, properties)
     local inst = Instance.new(className)
     inst.Name = getRandomName()
+    if inst:IsA("GuiObject") then
+        inst.Selectable = false
+        inst.Active = false
+    end
     if properties then
         for k, v in pairs(properties) do
             if k ~= "Name" then
@@ -120,6 +122,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 local function makeDraggable(dragHandle, targetFrame)
+    dragHandle.Active = true
     local dragging = false
     local dragInput, dragStart, startPos
     
@@ -185,7 +188,6 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         BackgroundColor3 = Color3.fromRGB(14, 14, 18),
         BorderSizePixel = 0,
         AutomaticSize = Enum.AutomaticSize.X,
-        Active = true,
         ZIndex = 100,
         Parent = screenGui
     })
@@ -243,7 +245,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     local sep1 = createWmLabel("Sep1", "|", Color3.fromRGB(120, 77, 78), 2, 14)
     local fpsLbl = createWmLabel("WmFps", "fps 60", wmTextColor, 3, 14)
     local sep2 = createWmLabel("Sep2", "|", Color3.fromRGB(120, 77, 78), 4, 14)
-    local msLbl = createWmLabel("WmMs", "ms 0", wmTextColor, 5, 14)
+    local msLbl = createWmLabel("WmMs", "ms 12", wmTextColor, 5, 14)
     local sep3 = createWmLabel("Sep3", "|", Color3.fromRGB(120, 77, 78), 6, 14)
     local userLbl = createWmLabel("WmUser", playerName, wmTextColor, 7, 14)
 
@@ -261,29 +263,20 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         end
     end)
 
-    local function getPing()
-        local pingVal = 0
-        pcall(function()
-            if StatsService and StatsService:FindFirstChild("Network") and StatsService.Network:FindFirstChild("ServerStatsItem") and StatsService.Network.ServerStatsItem:FindFirstChild("Data Ping") then
-                pingVal = math.floor(StatsService.Network.ServerStatsItem["Data Ping"]:GetValue())
-            end
-        end)
-        return pingVal
-    end
-
     local wmVisible = true
 
     local function updateWatermarkText()
         if not wmVisible then return end
-        local msVal = getPing()
         fpsLbl.Text = "fps " .. tostring(currentFps)
-        msLbl.Text = "ms " .. tostring(msVal)
+        msLbl.Text = "ms 12"
     end
 
     local wmLoopTask = task.spawn(function()
         while screenGui and screenGui.Parent do
-            updateWatermarkText()
-            task.wait(0.25)
+            if wmVisible then
+                updateWatermarkText()
+            end
+            task.wait(1.0)
         end
     end)
 
@@ -306,7 +299,6 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         BackgroundColor3 = Color3.fromRGB(14, 14, 18),
         BorderSizePixel = 0,
         AutomaticSize = Enum.AutomaticSize.Y,
-        Active = true,
         ZIndex = 100,
         Parent = screenGui
     })
@@ -367,7 +359,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
 
     local activeKeybinds = {}
 
-    local function updateKeybindInList(name, keyStr, modeStr)
+    local function updateKeybindInList(name, keyStr, modeStr, isActive)
         local modeText = modeStr or "Toggle"
         local displayText = ""
         if modeText == "Always" then
@@ -377,6 +369,10 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         end
         
         if displayText ~= "" then
+            local activeState = (isActive == true) or (modeText == "Always")
+            local nameColor = activeState and Color3.fromRGB(245, 245, 250) or Color3.fromRGB(160, 160, 175)
+            local valColor = activeState and Color3.fromRGB(245, 195, 68) or Color3.fromRGB(120, 120, 135)
+            
             if not activeKeybinds[name] then
                 local row = create("Frame", {
                     Size = UDim2.new(1, 0, 0, 18),
@@ -391,7 +387,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     BackgroundTransparency = 1,
                     Font = Enum.Font.Code,
                     TextSize = 12,
-                    TextColor3 = Color3.fromRGB(220, 220, 235),
+                    TextColor3 = nameColor,
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Text = name,
                     ZIndex = 102,
@@ -404,15 +400,17 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     BackgroundTransparency = 1,
                     Font = Enum.Font.Code,
                     TextSize = 12,
-                    TextColor3 = Color3.fromRGB(175, 175, 190),
+                    TextColor3 = valColor,
                     TextXAlignment = Enum.TextXAlignment.Right,
                     Text = displayText,
                     ZIndex = 102,
                     Parent = row
                 })
 
-                activeKeybinds[name] = {Row = row, ValLbl = valLbl}
+                activeKeybinds[name] = {Row = row, NameLbl = nameLbl, ValLbl = valLbl}
             else
+                activeKeybinds[name].NameLbl.TextColor3 = nameColor
+                activeKeybinds[name].ValLbl.TextColor3 = valColor
                 activeKeybinds[name].ValLbl.Text = displayText
             end
         else
@@ -427,8 +425,8 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         keybindFrame.Visible = visible
     end
 
-    function Window:UpdateKeybindInList(name, keyStr, modeStr)
-        updateKeybindInList(name, keyStr, modeStr)
+    function Window:UpdateKeybindInList(name, keyStr, modeStr, isActive)
+        updateKeybindInList(name, keyStr, modeStr, isActive)
     end
     
     -- ====================================================================
@@ -547,7 +545,6 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         Position = UDim2.new(0.5, -375, 0.5, -280),
         BackgroundColor3 = Color3.fromRGB(12, 12, 15),
         BorderSizePixel = 0,
-        Active = true,
         Visible = true,
         Parent = screenGui
     })
@@ -694,7 +691,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             Size = UDim2.new(0.31, 0, 1, 0),
             Position = UDim2.new(0.345, 0, 0, 0),
             BackgroundTransparency = 1,
-            Parent = centerCol
+            Parent = tabFrame
         })
         
         local centerLayout = create("UIListLayout", {
@@ -1028,6 +1025,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         })
         
         local state = defaultState or false
+        local activeKeybindUpdateFunc = nil
         
         local toggleBox = create("Frame", {
             Size = UDim2.new(0, 14, 0, 14),
@@ -1066,6 +1064,10 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             TweenService:Create(toggleBox, TweenInfo.new(0.15), {BackgroundColor3 = boxColor}):Play()
             TweenService:Create(toggleStroke, TweenInfo.new(0.15), {Color = strokeColor}):Play()
             TweenService:Create(toggleLabel, TweenInfo.new(0.15), {TextColor3 = textColor}):Play()
+            
+            if activeKeybindUpdateFunc then
+                activeKeybindUpdateFunc(state)
+            end
             
             if callback then
                 pcall(callback, state)
@@ -1148,19 +1150,24 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 return tostring(key):upper()
             end
             
-            local function updateKeybindDisplay()
+            local function updateKeybindDisplay(isActiveOverride)
                 local keyStr = getKeyName(currentKey)
+                local active = (isActiveOverride ~= nil) and isActiveOverride or state
                 if not currentKey or keyStr == "NONE" then
                     keybindBtn.Text = "[NONE]"
-                    Window:UpdateKeybindInList(text or "Toggle", "NONE", currentMode)
+                    Window:UpdateKeybindInList(text or "Toggle", "NONE", currentMode, false)
                 elseif currentMode == "Always" then
                     keybindBtn.Text = "[ALWAYS]"
                     updateToggle(true)
-                    Window:UpdateKeybindInList(text or "Toggle", keyStr, currentMode)
+                    Window:UpdateKeybindInList(text or "Toggle", keyStr, currentMode, true)
                 else
                     keybindBtn.Text = "[" .. keyStr .. "]"
-                    Window:UpdateKeybindInList(text or "Toggle", keyStr, currentMode)
+                    Window:UpdateKeybindInList(text or "Toggle", keyStr, currentMode, active)
                 end
+            end
+            
+            activeKeybindUpdateFunc = function(activeState)
+                updateKeybindDisplay(activeState)
             end
             
             updateKeybindDisplay()
@@ -1226,7 +1233,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     currentKey = nil
                     keybindBtn.Text = "[NONE]"
                     keybindBtn.TextColor3 = Color3.fromRGB(170, 170, 185)
-                    Window:UpdateKeybindInList(text or "Toggle", "NONE", currentMode)
+                    Window:UpdateKeybindInList(text or "Toggle", "NONE", currentMode, false)
                     if keyCallback then pcall(keyCallback, nil) end
                     lastClickTime = 0
                     return
@@ -1351,14 +1358,26 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = pickerPopup
             })
             
+            -- Hollow white circle ring cursor (exact match to photo)
             local mapCursor = create("Frame", {
-                Size = UDim2.new(0, 6, 0, 6),
+                Size = UDim2.new(0, 10, 0, 10),
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 Position = UDim2.new(currentS, 0, 1 - currentV, 0),
-                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                BorderSizePixel = 0,
+                BackgroundTransparency = 1,
                 ZIndex = 202,
                 Parent = satValMap
+            })
+            
+            local mapCursorCorner = create("UICorner", {
+                CornerRadius = UDim.new(1, 0),
+                Parent = mapCursor
+            })
+            
+            local mapCursorStroke = create("UIStroke", {
+                Thickness = 1.4,
+                Color = Color3.fromRGB(255, 255, 255),
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                Parent = mapCursor
             })
             
             local hueBar = create("ImageLabel", {
@@ -1370,8 +1389,9 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = pickerPopup
             })
             
+            -- White horizontal line cursor (exact match to photo)
             local hueCursor = create("Frame", {
-                Size = UDim2.new(1, 2, 0, 3),
+                Size = UDim2.new(1, 4, 0, 2),
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 Position = UDim2.new(0.5, 0, 1 - currentH, 0),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
