@@ -1351,7 +1351,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             local currentH, currentS, currentV = currentColor:ToHSV()
             
             local satValMap = create("ImageLabel", {
-                Size = UDim2.new(0, 140, 0, 120),
+                Size = UDim2.new(0, 136, 0, 118),
                 Position = UDim2.new(0, 8, 0, 8),
                 Image = "rbxassetid://4155801252",
                 BackgroundColor3 = Color3.fromHSV(currentH, 1, 1),
@@ -1360,7 +1360,14 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = pickerPopup
             })
             
-            -- Hollow white circle ring cursor (exact match to photo)
+            local satValStroke = create("UIStroke", {
+                Thickness = 1.0,
+                Color = Color3.fromRGB(0, 0, 0),
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                Parent = satValMap
+            })
+            
+            -- Hollow white circle ring cursor (exact match to user photo)
             local mapCursor = create("Frame", {
                 Size = UDim2.new(0, 10, 0, 10),
                 AnchorPoint = Vector2.new(0.5, 0.5),
@@ -1383,17 +1390,24 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             })
             
             local hueBar = create("ImageLabel", {
-                Size = UDim2.new(0, 14, 0, 120),
-                Position = UDim2.new(0, 156, 0, 8),
+                Size = UDim2.new(0, 22, 0, 118),
+                Position = UDim2.new(0, 150, 0, 8),
                 Image = "rbxassetid://328298876",
                 BorderSizePixel = 0,
                 ZIndex = 201,
                 Parent = pickerPopup
             })
             
-            -- White horizontal line cursor (exact match to photo)
+            local hueStroke = create("UIStroke", {
+                Thickness = 1.0,
+                Color = Color3.fromRGB(0, 0, 0),
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                Parent = hueBar
+            })
+            
+            -- White horizontal line cursor (exact match to user photo)
             local hueCursor = create("Frame", {
-                Size = UDim2.new(1, 4, 0, 2),
+                Size = UDim2.new(1, 2, 0, 2),
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 Position = UDim2.new(0.5, 0, 1 - currentH, 0),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -1403,8 +1417,8 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             })
             
             local hexInput = create("TextBox", {
-                Size = UDim2.new(0, 162, 0, 20),
-                Position = UDim2.new(0, 8, 0, 134),
+                Size = UDim2.new(0, 164, 0, 20),
+                Position = UDim2.new(0, 8, 0, 132),
                 BackgroundColor3 = Color3.fromRGB(20, 20, 26),
                 BorderSizePixel = 0,
                 Font = Enum.Font.Code,
@@ -1415,7 +1429,13 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = pickerPopup
             })
             
-            local lastColorFire = 0
+            local hexStroke = create("UIStroke", {
+                Thickness = 1.0,
+                Color = Color3.fromRGB(42, 42, 50),
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                Parent = hexInput
+            })
+            
             local function updateColor(h, s, v, source)
                 currentH, currentS, currentV = h or currentH, s or currentS, v or currentV
                 currentColor = Color3.fromHSV(currentH, currentS, currentV)
@@ -1426,10 +1446,10 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     hexInput.Text = "#" .. currentColor:ToHex():upper()
                 end
                 
-                -- Throttled callback execution to prevent BAC rate-limit bans during continuous dragging
-                local now = os.clock()
-                if now - lastColorFire >= 0.05 or source == "release" or source == "hex" then
-                    lastColorFire = now
+                -- BAC Anti-Cheat Safe Deferred Callback Execution:
+                -- While dragging, ONLY update GUI elements to prevent rapid property mutation flags.
+                -- Fire game callback ONLY on mouse release, hex commit, or initial load!
+                if source == "release" or source == "hex" or source == "init" then
                     if colorCallback then pcall(colorCallback, currentColor) end
                 end
             end
@@ -1446,7 +1466,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     local relX = math.clamp((input.Position.X - absPos.X) / absSize.X, 0, 1)
                     local relY = math.clamp((input.Position.Y - absPos.Y) / absSize.Y, 0, 1)
                     mapCursor.Position = UDim2.new(relX, 0, relY, 0)
-                    updateColor(currentH, relX, 1 - relY)
+                    updateColor(currentH, relX, 1 - relY, "drag")
                 end
             end)
             
@@ -1458,7 +1478,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     local absSize = hueBar.AbsoluteSize
                     local relY = math.clamp((input.Position.Y - absPos.Y) / absSize.Y, 0, 1)
                     hueCursor.Position = UDim2.new(0.5, 0, relY, 0)
-                    updateColor(1 - relY, currentS, currentV)
+                    updateColor(1 - relY, currentS, currentV, "drag")
                 end
             end)
             
@@ -1480,25 +1500,27 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                         local relX = math.clamp((input.Position.X - absPos.X) / absSize.X, 0, 1)
                         local relY = math.clamp((input.Position.Y - absPos.Y) / absSize.Y, 0, 1)
                         mapCursor.Position = UDim2.new(relX, 0, relY, 0)
-                        updateColor(currentH, relX, 1 - relY)
+                        updateColor(currentH, relX, 1 - relY, "drag")
                     elseif draggingHue then
                         local absPos = hueBar.AbsolutePosition
                         local absSize = hueBar.AbsoluteSize
                         local relY = math.clamp((input.Position.Y - absPos.Y) / absSize.Y, 0, 1)
                         hueCursor.Position = UDim2.new(0.5, 0, relY, 0)
-                        updateColor(1 - relY, currentS, currentV)
+                        updateColor(1 - relY, currentS, currentV, "drag")
                     end
                 end
             end)
             
-            hexInput.FocusLost:Connect(function()
-                local text = hexInput.Text:gsub("#", "")
-                local ok, col = pcall(function() return Color3.fromHex(text) end)
-                if ok and col then
-                    local h, s, v = col:ToHSV()
-                    mapCursor.Position = UDim2.new(s, 0, 1 - v, 0)
-                    hueCursor.Position = UDim2.new(0.5, 0, 1 - h, 0)
-                    updateColor(h, s, v, "hex")
+            hexInput.FocusLost:Connect(function(enterPressed)
+                local txt = hexInput.Text:gsub("#", "")
+                if #txt == 6 then
+                    local ok, col = pcall(function() return Color3.fromHex(txt) end)
+                    if ok and col then
+                        local h, s, v = col:ToHSV()
+                        mapCursor.Position = UDim2.new(s, 0, 1 - v, 0)
+                        hueCursor.Position = UDim2.new(0.5, 0, 1 - h, 0)
+                        updateColor(h, s, v, "hex")
+                    end
                 end
             end)
             
