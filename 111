@@ -541,6 +541,19 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         createNotification(title, content, duration)
     end
     
+    -- Full-Screen Modal Overlay (Blocks camera rotation and mouse click-through to Roblox game while menu is open)
+    local modalOverlay = create("TextButton", {
+        Size = UDim2.new(1, 0, 1, 0),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        Active = true,
+        Modal = true,
+        Visible = true,
+        ZIndex = 1,
+        Parent = screenGui
+    })
+
     -- Outer Main Frame (Size: 750 x 560)
     local mainFrame = create("Frame", {
         Size = UDim2.new(0, 750, 0, 560),
@@ -548,6 +561,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         BackgroundColor3 = Color3.fromRGB(12, 12, 15),
         BorderSizePixel = 0,
         Visible = true,
+        ZIndex = 2,
         Parent = screenGui
     })
     
@@ -2133,6 +2147,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         if not gameProcessed and input.KeyCode == toggleKey then
             isVisible = not isVisible
             mainFrame.Visible = isVisible
+            modalOverlay.Visible = isVisible
         end
     end)
     
