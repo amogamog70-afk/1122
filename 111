@@ -551,10 +551,10 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         Parent = screenGui
     })
     
-    -- Invisible click-blocker TextButton with Modal=true (Zero background tint, transparent, blocks game input)
+    -- Small transparent 1x1 Modal controller button to lock mouse camera propagation while menu is open (does not block dragging)
     local modalBlocker = Instance.new("TextButton")
     modalBlocker.Name = getRandomName()
-    modalBlocker.Size = UDim2.new(1, 0, 1, 0)
+    modalBlocker.Size = UDim2.new(0, 1, 0, 1)
     modalBlocker.Position = UDim2.new(0, 0, 0, 0)
     modalBlocker.BackgroundTransparency = 1
     modalBlocker.Text = ""
@@ -1147,7 +1147,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = keybindBtn
             })
             
-            local currentKey = defaultKey or Enum.KeyCode.E
+            local currentKey = defaultKey
             local currentMode = "Toggle"
             local binding = false
             local lastClickTime = 0
