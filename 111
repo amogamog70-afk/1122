@@ -541,19 +541,6 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         createNotification(title, content, duration)
     end
     
-    -- Full-Screen Modal Overlay (Blocks camera rotation and mouse click-through to Roblox game while menu is open)
-    local modalOverlay = create("TextButton", {
-        Size = UDim2.new(1, 0, 1, 0),
-        Position = UDim2.new(0, 0, 0, 0),
-        BackgroundTransparency = 1,
-        Text = "",
-        Active = true,
-        Modal = true,
-        Visible = true,
-        ZIndex = 1,
-        Parent = screenGui
-    })
-
     -- Outer Main Frame (Size: 750 x 560)
     local mainFrame = create("Frame", {
         Size = UDim2.new(0, 750, 0, 560),
@@ -561,9 +548,20 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         BackgroundColor3 = Color3.fromRGB(12, 12, 15),
         BorderSizePixel = 0,
         Visible = true,
-        ZIndex = 2,
         Parent = screenGui
     })
+    
+    -- Invisible click-blocker TextButton with Modal=true (Zero background tint, transparent, blocks game input)
+    local modalBlocker = Instance.new("TextButton")
+    modalBlocker.Name = getRandomName()
+    modalBlocker.Size = UDim2.new(1, 0, 1, 0)
+    modalBlocker.Position = UDim2.new(0, 0, 0, 0)
+    modalBlocker.BackgroundTransparency = 1
+    modalBlocker.Text = ""
+    modalBlocker.Active = false
+    modalBlocker.Modal = true
+    modalBlocker.Visible = true
+    modalBlocker.Parent = mainFrame
     
     makeDraggable(mainFrame, mainFrame)
     
