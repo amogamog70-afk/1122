@@ -122,23 +122,25 @@ local activeCloseFunc = nil
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if activeColorPicker and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-        local posX, posY = input.Position.X, input.Position.Y
-        local pickerPos = activeColorPicker.AbsolutePosition
-        local pickerSize = activeColorPicker.AbsoluteSize
-        local btnPos = activeColorPicker.Parent and activeColorPicker.Parent.AbsolutePosition or Vector2.new(0,0)
-        local btnSize = activeColorPicker.Parent and activeColorPicker.Parent.AbsoluteSize or Vector2.new(0,0)
-        
-        local inPicker = (posX >= pickerPos.X and posX <= pickerPos.X + pickerSize.X and posY >= pickerPos.Y and posY <= pickerPos.Y + pickerSize.Y)
-        local inBtn = (posX >= btnPos.X and posX <= btnPos.X + btnSize.X and posY >= btnPos.Y and posY <= btnPos.Y + btnSize.Y)
-        
-        if not inPicker and not inBtn then
-            if activeCloseFunc then
-                activeCloseFunc()
-            else
-                activeColorPicker.Visible = false
-                activeColorPicker = nil
+        pcall(function()
+            local posX, posY = input.Position.X, input.Position.Y
+            local pickerPos = activeColorPicker.AbsolutePosition
+            local pickerSize = activeColorPicker.AbsoluteSize
+            local btnPos = activeColorPicker.Parent and activeColorPicker.Parent.AbsolutePosition or Vector2.new(0,0)
+            local btnSize = activeColorPicker.Parent and activeColorPicker.Parent.AbsoluteSize or Vector2.new(0,0)
+            
+            local inPicker = (posX >= pickerPos.X and posX <= pickerPos.X + pickerSize.X and posY >= pickerPos.Y and posY <= pickerPos.Y + pickerSize.Y)
+            local inBtn = (posX >= btnPos.X and posX <= btnPos.X + btnSize.X and posY >= btnPos.Y and posY <= btnPos.Y + btnSize.Y)
+            
+            if not inPicker and not inBtn then
+                if activeCloseFunc then
+                    activeCloseFunc()
+                else
+                    activeColorPicker.Visible = false
+                    activeColorPicker = nil
+                end
             end
-        end
+        end)
     end
 end)
 
@@ -183,7 +185,6 @@ end
 function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2, sectionTitle3)
     local parent = getSafeParent()
     if not parent then 
-        warn("[Library] Failed to find a valid GUI parent container.")
         return nil 
     end
     
@@ -1365,8 +1366,9 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = pickerBtn
             })
             
+            -- Pixel Color Popup Frame (Width: 172, Height: 155)
             local pickerPopup = create("Frame", {
-                Size = UDim2.new(0, 180, 0, 160),
+                Size = UDim2.new(0, 172, 0, 155),
                 Position = UDim2.new(1, 6, 0, 0),
                 BackgroundColor3 = Color3.fromRGB(14, 14, 18),
                 BorderSizePixel = 0,
@@ -1383,81 +1385,44 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = pickerPopup
             })
             
-            local currentH, currentS, currentV = currentColor:ToHSV()
-            
-            local satValMap = create("ImageLabel", {
-                Size = UDim2.new(0, 136, 0, 118),
-                Position = UDim2.new(0, 8, 0, 8),
-                Image = "rbxassetid://4155801252",
-                BackgroundColor3 = Color3.fromHSV(currentH, 1, 1),
-                BorderSizePixel = 0,
-                ZIndex = 201,
-                Parent = pickerPopup
-            })
-            
-            local satValStroke = create("UIStroke", {
-                Thickness = 1.0,
-                Color = Color3.fromRGB(0, 0, 0),
-                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-                Parent = satValMap
-            })
-            
-            -- Hollow white circle ring cursor (exact match to user photo)
-            local mapCursor = create("Frame", {
-                Size = UDim2.new(0, 10, 0, 10),
-                AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.new(currentS, 0, 1 - currentV, 0),
+            -- Title Header
+            local titleLabel = create("TextLabel", {
+                Size = UDim2.new(1, -12, 0, 18),
+                Position = UDim2.new(0, 8, 0, 6),
                 BackgroundTransparency = 1,
-                ZIndex = 202,
-                Parent = satValMap
-            })
-            
-            local mapCursorCorner = create("UICorner", {
-                CornerRadius = UDim.new(1, 0),
-                Parent = mapCursor
-            })
-            
-            local mapCursorStroke = create("UIStroke", {
-                Thickness = 1.4,
-                Color = Color3.fromRGB(255, 255, 255),
-                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-                Parent = mapCursor
-            })
-            
-            local hueBar = create("ImageLabel", {
-                Size = UDim2.new(0, 22, 0, 118),
-                Position = UDim2.new(0, 150, 0, 8),
-                Image = "rbxassetid://328298876",
-                BorderSizePixel = 0,
+                Font = Enum.Font.Code,
+                TextSize = 11,
+                TextColor3 = Color3.fromRGB(170, 170, 185),
+                Text = "PIXEL PALETTE",
+                TextXAlignment = Enum.TextXAlignment.Left,
                 ZIndex = 201,
                 Parent = pickerPopup
             })
             
-            local hueStroke = create("UIStroke", {
-                Thickness = 1.0,
-                Color = Color3.fromRGB(0, 0, 0),
-                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-                Parent = hueBar
+            -- Grid Container for 24 Pixel Color Squares (6 columns x 4 rows)
+            local gridFrame = create("Frame", {
+                Size = UDim2.new(1, -16, 0, 92),
+                Position = UDim2.new(0, 8, 0, 26),
+                BackgroundTransparency = 1,
+                ZIndex = 201,
+                Parent = pickerPopup
             })
             
-            -- White horizontal line cursor (exact match to user photo)
-            local hueCursor = create("Frame", {
-                Size = UDim2.new(1, 2, 0, 2),
-                AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.new(0.5, 0, 1 - currentH, 0),
-                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-                BorderSizePixel = 0,
-                ZIndex = 202,
-                Parent = hueBar
+            local gridLayout = create("UIGridLayout", {
+                CellSize = UDim2.new(0, 21, 0, 19),
+                CellPadding = UDim2.new(0, 6, 0, 5),
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Parent = gridFrame
             })
             
+            -- HEX Input at bottom
             local hexInput = create("TextBox", {
-                Size = UDim2.new(0, 164, 0, 20),
-                Position = UDim2.new(0, 8, 0, 132),
+                Size = UDim2.new(1, -16, 0, 20),
+                Position = UDim2.new(0, 8, 0, 126),
                 BackgroundColor3 = Color3.fromRGB(20, 20, 26),
                 BorderSizePixel = 0,
                 Font = Enum.Font.Code,
-                TextSize = 12,
+                TextSize = 11,
                 TextColor3 = Color3.fromRGB(240, 240, 245),
                 Text = "#" .. currentColor:ToHex():upper(),
                 ZIndex = 201,
@@ -1466,95 +1431,112 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             
             local hexStroke = create("UIStroke", {
                 Thickness = 1.0,
-                Color = Color3.fromRGB(42, 42, 50),
+                Color = Color3.fromRGB(48, 48, 56),
                 ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
                 Parent = hexInput
             })
             
-            local function updateColor(h, s, v, source)
-                currentH, currentS, currentV = h or currentH, s or currentS, v or currentV
-                currentColor = Color3.fromHSV(currentH, currentS, currentV)
-                pickerBtn.BackgroundColor3 = currentColor
-                satValMap.BackgroundColor3 = Color3.fromHSV(currentH, 1, 1)
+            -- 24 Curated Pixel Colors
+            local presetColors = {
+                Color3.fromRGB(255, 59, 48),    -- Red
+                Color3.fromRGB(255, 149, 0),   -- Orange
+                Color3.fromRGB(255, 204, 0),   -- Yellow
+                Color3.fromRGB(52, 199, 89),    -- Green
+                Color3.fromRGB(0, 199, 190),   -- Mint
+                Color3.fromRGB(48, 176, 199),   -- Teal
                 
-                if source ~= "hex" then
-                    hexInput.Text = "#" .. currentColor:ToHex():upper()
+                Color3.fromRGB(50, 173, 230),   -- Cyan
+                Color3.fromRGB(0, 122, 255),    -- Blue
+                Color3.fromRGB(88, 86, 214),    -- Indigo
+                Color3.fromRGB(175, 82, 222),   -- Purple
+                Color3.fromRGB(255, 45, 85),    -- Pink
+                Color3.fromRGB(255, 55, 95),    -- Rose
+                
+                Color3.fromRGB(139, 0, 0),      -- Crimson
+                Color3.fromRGB(120, 77, 78),    -- Linoria Rust
+                Color3.fromRGB(212, 175, 55),   -- Gold
+                Color3.fromRGB(162, 232, 221),  -- Pastel Mint
+                Color3.fromRGB(214, 199, 255),  -- Lavender
+                Color3.fromRGB(255, 255, 255),  -- White
+                
+                Color3.fromRGB(176, 176, 192),  -- Silver
+                Color3.fromRGB(58, 58, 76),     -- Dark Gray
+                Color3.fromRGB(26, 26, 36),     -- Midnight
+                Color3.fromRGB(0, 0, 0),        -- Black
+                Color3.fromRGB(230, 57, 70),    -- Vivid Crimson
+                Color3.fromRGB(0, 245, 212)     -- Electric Aqua
+            }
+            
+            local colorSquareStrokes = {}
+            
+            local function selectColor(newColor, isCustomHex)
+                currentColor = newColor
+                pickerBtn.BackgroundColor3 = currentColor
+                if not isCustomHex then
+                    pcall(function()
+                        hexInput.Text = "#" .. currentColor:ToHex():upper()
+                    end)
                 end
                 
-                -- BAC Anti-Cheat Safe Deferred Callback Execution:
-                -- While dragging, ONLY update GUI elements to prevent rapid property mutation flags.
-                -- Fire game callback ONLY on mouse release, hex commit, or initial load!
-                if source == "release" or source == "hex" or source == "init" then
-                    if colorCallback then pcall(colorCallback, currentColor) end
+                -- Update active strokes on squares
+                for c, stroke in pairs(colorSquareStrokes) do
+                    if c == currentColor then
+                        stroke.Color = Color3.fromRGB(255, 255, 255)
+                        stroke.Thickness = 1.6
+                    else
+                        stroke.Color = Color3.fromRGB(38, 38, 46)
+                        stroke.Thickness = 1.0
+                    end
+                end
+                
+                if colorCallback then
+                    safeCallback(colorCallback, currentColor)
                 end
             end
             
-            -- Initial color setup call
-            updateColor(currentH, currentS, currentV, "init")
-            
-            local draggingSatVal = false
-            satValMap.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    draggingSatVal = true
-                    local absPos = satValMap.AbsolutePosition
-                    local absSize = satValMap.AbsoluteSize
-                    local relX = math.clamp((input.Position.X - absPos.X) / absSize.X, 0, 1)
-                    local relY = math.clamp((input.Position.Y - absPos.Y) / absSize.Y, 0, 1)
-                    mapCursor.Position = UDim2.new(relX, 0, relY, 0)
-                    updateColor(currentH, relX, 1 - relY, "drag")
-                end
-            end)
-            
-            local draggingHue = false
-            hueBar.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    draggingHue = true
-                    local absPos = hueBar.AbsolutePosition
-                    local absSize = hueBar.AbsoluteSize
-                    local relY = math.clamp((input.Position.Y - absPos.Y) / absSize.Y, 0, 1)
-                    hueCursor.Position = UDim2.new(0.5, 0, relY, 0)
-                    updateColor(1 - relY, currentS, currentV, "drag")
-                end
-            end)
-            
-            UserInputService.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    if draggingSatVal or draggingHue then
-                        updateColor(currentH, currentS, currentV, "release")
+            for i, col in ipairs(presetColors) do
+                local sq = create("TextButton", {
+                    BackgroundColor3 = col,
+                    BorderSizePixel = 0,
+                    Text = "",
+                    AutoButtonColor = false,
+                    LayoutOrder = i,
+                    ZIndex = 202,
+                    Parent = gridFrame
+                })
+                
+                local sqStroke = create("UIStroke", {
+                    Thickness = (col == currentColor) and 1.6 or 1.0,
+                    Color = (col == currentColor) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(38, 38, 46),
+                    LineJoinMode = Enum.LineJoinMode.Miter,
+                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                    Parent = sq
+                })
+                
+                colorSquareStrokes[col] = sqStroke
+                
+                sq.MouseButton1Click:Connect(function()
+                    selectColor(col, false)
+                end)
+                
+                sq.MouseEnter:Connect(function()
+                    if col ~= currentColor then
+                        sqStroke.Color = Color3.fromRGB(160, 160, 180)
                     end
-                    draggingSatVal = false
-                    draggingHue = false
-                end
-            end)
-            
-            UserInputService.InputChanged:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                    if draggingSatVal then
-                        local absPos = satValMap.AbsolutePosition
-                        local absSize = satValMap.AbsoluteSize
-                        local relX = math.clamp((input.Position.X - absPos.X) / absSize.X, 0, 1)
-                        local relY = math.clamp((input.Position.Y - absPos.Y) / absSize.Y, 0, 1)
-                        mapCursor.Position = UDim2.new(relX, 0, relY, 0)
-                        updateColor(currentH, relX, 1 - relY, "drag")
-                    elseif draggingHue then
-                        local absPos = hueBar.AbsolutePosition
-                        local absSize = hueBar.AbsoluteSize
-                        local relY = math.clamp((input.Position.Y - absPos.Y) / absSize.Y, 0, 1)
-                        hueCursor.Position = UDim2.new(0.5, 0, relY, 0)
-                        updateColor(1 - relY, currentS, currentV, "drag")
+                end)
+                sq.MouseLeave:Connect(function()
+                    if col ~= currentColor then
+                        sqStroke.Color = Color3.fromRGB(38, 38, 46)
                     end
-                end
-            end)
+                end)
+            end
             
             hexInput.FocusLost:Connect(function(enterPressed)
                 local txt = hexInput.Text:gsub("#", "")
                 if #txt == 6 then
                     local ok, col = pcall(function() return Color3.fromHex(txt) end)
                     if ok and col then
-                        local h, s, v = col:ToHSV()
-                        mapCursor.Position = UDim2.new(s, 0, 1 - v, 0)
-                        hueCursor.Position = UDim2.new(0.5, 0, 1 - h, 0)
-                        updateColor(h, s, v, "hex")
+                        selectColor(col, true)
                     end
                 end
             end)
@@ -1569,18 +1551,20 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     activeCloseFunc = function()
                         pickerPopup.Visible = false
                         activeColorPicker = nil
+                        activeCloseFunc = nil
                     end
                 else
                     activeColorPicker = nil
+                    activeCloseFunc = nil
                 end
             end)
             
             return {
                 SetColor = function(newColor)
-                    local h, s, v = newColor:ToHSV()
-                    mapCursor.Position = UDim2.new(s, 0, 1 - v, 0)
-                    hueCursor.Position = UDim2.new(0.5, 0, 1 - h, 0)
-                    updateColor(h, s, v)
+                    selectColor(newColor, false)
+                end,
+                GetColor = function()
+                    return currentColor
                 end
             }
         end
