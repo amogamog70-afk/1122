@@ -372,7 +372,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         local displayText = ""
         if modeText == "Always" then
             displayText = "[Always]"
-        elseif keyStr and keyStr ~= "NONE" then
+        elseif keyStr and keyStr ~= "NONE" and keyStr ~= "" then
             displayText = "[" .. tostring(keyStr) .. "] [" .. tostring(modeText) .. "]"
         end
         
@@ -417,7 +417,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             end
         else
             if activeKeybinds[name] then
-                activeKeybinds[name].Row:Destroy()
+                pcall(function() activeKeybinds[name].Row:Destroy() end)
                 activeKeybinds[name] = nil
             end
         end
@@ -694,7 +694,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             Size = UDim2.new(0.31, 0, 1, 0),
             Position = UDim2.new(0.345, 0, 0, 0),
             BackgroundTransparency = 1,
-            Parent = tabFrame
+            Parent = centerCol
         })
         
         local centerLayout = create("UIListLayout", {
@@ -1046,7 +1046,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         })
         
         local toggleLabel = create("TextLabel", {
-            Size = UDim2.new(1, -32, 0, 20),
+            Size = UDim2.new(1, -85, 0, 20),
             Position = UDim2.new(0, 32, 0, 0),
             BackgroundTransparency = 1,
             Text = text or "Toggle",
@@ -1093,6 +1093,20 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         toggleObj.SetState = updateToggle
         toggleObj.GetState = function() return state end
         
+        local keybindBtnRef = nil
+        local pickerBtnRef = nil
+        
+        local function updateSubControlPositions()
+            if pickerBtnRef and keybindBtnRef then
+                pickerBtnRef.Position = UDim2.new(1, -26, 0, 3)
+                keybindBtnRef.Position = UDim2.new(1, -74, 0, 2)
+            elseif pickerBtnRef then
+                pickerBtnRef.Position = UDim2.new(1, -26, 0, 3)
+            elseif keybindBtnRef then
+                keybindBtnRef.Position = UDim2.new(1, -48, 0, 2)
+            end
+        end
+        
         function toggleObj:AddKeybind(defaultKey, keyCallback)
             local keybindBtn = create("TextButton", {
                 Size = UDim2.new(0, 44, 0, 16),
@@ -1106,6 +1120,9 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = toggleFrame
             })
             
+            keybindBtnRef = keybindBtn
+            updateSubControlPositions()
+            
             local keyStroke = create("UIStroke", {
                 Thickness = 1.0,
                 Color = Color3.fromRGB(48, 48, 56),
@@ -1117,6 +1134,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             local currentKey = defaultKey or Enum.KeyCode.E
             local currentMode = "Toggle"
             local binding = false
+            local lastClickTime = 0
             
             local function getKeyName(key)
                 if not key then return "NONE" end
@@ -1131,13 +1149,18 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             end
             
             local function updateKeybindDisplay()
-                if currentMode == "Always" then
+                local keyStr = getKeyName(currentKey)
+                if not currentKey or keyStr == "NONE" then
+                    keybindBtn.Text = "[NONE]"
+                    Window:UpdateKeybindInList(text or "Toggle", "NONE", currentMode)
+                elseif currentMode == "Always" then
                     keybindBtn.Text = "[ALWAYS]"
                     updateToggle(true)
+                    Window:UpdateKeybindInList(text or "Toggle", keyStr, currentMode)
                 else
-                    keybindBtn.Text = "[" .. getKeyName(currentKey) .. "]"
+                    keybindBtn.Text = "[" .. keyStr .. "]"
+                    Window:UpdateKeybindInList(text or "Toggle", keyStr, currentMode)
                 end
-                Window:UpdateKeybindInList(text or "Toggle", getKeyName(currentKey), currentMode)
             end
             
             updateKeybindDisplay()
@@ -1196,6 +1219,20 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             end
             
             keybindBtn.MouseButton1Click:Connect(function()
+                local now = os.clock()
+                if now - lastClickTime < 0.35 then
+                    -- Double Left Click Reset / Clear Keybind
+                    binding = false
+                    currentKey = nil
+                    keybindBtn.Text = "[NONE]"
+                    keybindBtn.TextColor3 = Color3.fromRGB(170, 170, 185)
+                    Window:UpdateKeybindInList(text or "Toggle", "NONE", currentMode)
+                    if keyCallback then pcall(keyCallback, nil) end
+                    lastClickTime = 0
+                    return
+                end
+                lastClickTime = now
+                
                 if binding then return end
                 binding = true
                 keybindBtn.Text = "[...]"
@@ -1227,7 +1264,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             end)
             
             UserInputService.InputBegan:Connect(function(input, gameProcessed)
-                if gameProcessed or binding then return end
+                if gameProcessed or binding or not currentKey then return end
                 if currentMode == "Always" then return end
                 
                 local isTriggered = false
@@ -1247,7 +1284,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             end)
             
             UserInputService.InputEnded:Connect(function(input, gameProcessed)
-                if currentMode == "Hold" and typeof(currentKey) == "EnumItem" then
+                if currentMode == "Hold" and typeof(currentKey) == "EnumItem" and currentKey then
                     if input.KeyCode == currentKey or input.UserInputType == currentKey then
                         updateToggle(false)
                     end
@@ -1261,17 +1298,20 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         end
 
         function toggleObj:AddColorPicker(defaultColor, colorCallback)
-            local currentColor = defaultColor or Color3.fromRGB(255, 255, 255)
+            local currentColor = defaultColor or Color3.fromRGB(120, 77, 78)
             
             local pickerBtn = create("TextButton", {
-                Size = UDim2.new(0, 24, 0, 14),
-                Position = UDim2.new(1, -28, 0, 3),
+                Size = UDim2.new(0, 20, 0, 14),
+                Position = UDim2.new(1, -26, 0, 3),
                 BackgroundColor3 = currentColor,
                 BorderSizePixel = 0,
                 Text = "",
                 AutoButtonColor = false,
                 Parent = toggleFrame
             })
+            
+            pickerBtnRef = pickerBtn
+            updateSubControlPositions()
             
             local pickerStroke = create("UIStroke", {
                 Thickness = 1.0,
@@ -1299,11 +1339,13 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = pickerPopup
             })
             
+            local currentH, currentS, currentV = currentColor:ToHSV()
+            
             local satValMap = create("ImageLabel", {
                 Size = UDim2.new(0, 140, 0, 120),
                 Position = UDim2.new(0, 8, 0, 8),
                 Image = "rbxassetid://4155801252",
-                BackgroundColor3 = Color3.fromRGB(255, 0, 0),
+                BackgroundColor3 = Color3.fromHSV(currentH, 1, 1),
                 BorderSizePixel = 0,
                 ZIndex = 201,
                 Parent = pickerPopup
@@ -1312,7 +1354,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             local mapCursor = create("Frame", {
                 Size = UDim2.new(0, 6, 0, 6),
                 AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.new(1, 0, 0, 0),
+                Position = UDim2.new(currentS, 0, 1 - currentV, 0),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                 BorderSizePixel = 0,
                 ZIndex = 202,
@@ -1331,7 +1373,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             local hueCursor = create("Frame", {
                 Size = UDim2.new(1, 2, 0, 3),
                 AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.new(0.5, 0, 0, 0),
+                Position = UDim2.new(0.5, 0, 1 - currentH, 0),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                 BorderSizePixel = 0,
                 ZIndex = 202,
@@ -1351,8 +1393,6 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = pickerPopup
             })
             
-            local currentH, currentS, currentV = currentColor:ToHSV()
-            
             local function updateColor(h, s, v, source)
                 currentH, currentS, currentV = h or currentH, s or currentS, v or currentV
                 currentColor = Color3.fromHSV(currentH, currentS, currentV)
@@ -1366,10 +1406,19 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 if colorCallback then pcall(colorCallback, currentColor) end
             end
             
+            -- Initial color setup call
+            updateColor(currentH, currentS, currentV)
+            
             local draggingSatVal = false
             satValMap.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     draggingSatVal = true
+                    local absPos = satValMap.AbsolutePosition
+                    local absSize = satValMap.AbsoluteSize
+                    local relX = math.clamp((input.Position.X - absPos.X) / absSize.X, 0, 1)
+                    local relY = math.clamp((input.Position.Y - absPos.Y) / absSize.Y, 0, 1)
+                    mapCursor.Position = UDim2.new(relX, 0, relY, 0)
+                    updateColor(currentH, relX, 1 - relY)
                 end
             end)
             
@@ -1377,6 +1426,11 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             hueBar.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     draggingHue = true
+                    local absPos = hueBar.AbsolutePosition
+                    local absSize = hueBar.AbsoluteSize
+                    local relY = math.clamp((input.Position.Y - absPos.Y) / absSize.Y, 0, 1)
+                    hueCursor.Position = UDim2.new(0.5, 0, relY, 0)
+                    updateColor(1 - relY, currentS, currentV)
                 end
             end)
             
@@ -2011,7 +2065,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         return {Btn1 = btn1, Btn2 = btn2}
     end
     
-    local toggleKey = Enum.KeyCode.End
+    local toggleKey = Enum.KeyCode.RightShift
     local isVisible = true
     
     local toggleConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
