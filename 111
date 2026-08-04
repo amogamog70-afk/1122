@@ -1,20 +1,5 @@
 local Library = {}
 
-local globalEnv = (getgenv and getgenv()) or _G or shared
-
--- Dynamic randomized stealth key per session to prevent static key scanning in _G / getgenv
-local STEALTH_KEY = "__lx_" .. string.format("%x%x", math.random(100000, 999999), os.time() % 10000)
-
-if rawget(globalEnv, STEALTH_KEY) then
-    pcall(function()
-        local prev = rawget(globalEnv, STEALTH_KEY)
-        if typeof(prev) == "Instance" then
-            prev:Destroy()
-        end
-    end)
-    rawset(globalEnv, STEALTH_KEY, nil)
-end
-
 -- Anti-Cheat Countermeasures & Protection Utilities
 local cloneFunc = (typeof(clonefunction) == "function" and clonefunction) or function(f) return f end
 local safeGetService = cloneFunc(game.GetService)
@@ -91,13 +76,21 @@ local function getSafeParent()
         local ok, hui = pcall(gethui)
         if ok and hui then return hui end
     end
+    if typeof(gethiddenui) == "function" then
+        local ok, hui = pcall(gethiddenui)
+        if ok and hui then return hui end
+    end
+    if typeof(get_hidden_gui) == "function" then
+        local ok, hui = pcall(get_hidden_gui)
+        if ok and hui then return hui end
+    end
     if CoreGui then
         local robloxGui = CoreGui:FindFirstChild("RobloxGui")
         if robloxGui then return robloxGui end
         return CoreGui
     end
     if LocalPlayer then
-        local playerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 5)
+        local playerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui")
         if playerGui then return playerGui end
     end
     return nil
@@ -206,8 +199,6 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     })
     protectScreenGui(screenGui)
     screenGui.Parent = parent
-    
-    rawset(globalEnv, STEALTH_KEY, screenGui)
     
     -- ====================================================================
     -- WATERMARK (LinoriaLib Style: DeadHub | fps 144 | ms 35 | PlayerName)
@@ -2169,9 +2160,6 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             if wmLoopTask then task.cancel(wmLoopTask) end
             if toggleConnection then toggleConnection:Disconnect() end
             if screenGui then screenGui:Destroy() end
-            if rawget(globalEnv, STEALTH_KEY) == screenGui then
-                rawset(globalEnv, STEALTH_KEY, nil)
-            end
         end)
     end
     Window.Destroy = Window.Destroy
