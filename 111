@@ -101,7 +101,7 @@ local function create(className, properties)
     inst.Name = getRandomName()
     if inst:IsA("GuiObject") then
         inst.Selectable = false
-        inst.Active = false
+        inst.Active = true
     end
     if properties then
         for k, v in pairs(properties) do
@@ -384,7 +384,9 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     local function updateKeybindInList(name, keyStr, modeStr, isActive)
         local modeText = modeStr or "Toggle"
         local displayText = ""
-        if modeText == "Always" then
+        if keyStr == "..." then
+            displayText = "[...]"
+        elseif modeText == "Always" then
             displayText = "[Always]"
         elseif keyStr and keyStr ~= "NONE" and keyStr ~= "" then
             displayText = "[" .. tostring(keyStr) .. "] [" .. tostring(modeText) .. "]"
@@ -393,7 +395,6 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         if displayText ~= "" then
             local activeState = (isActive == true) or (modeText == "Always")
             
-            -- Linoria style dynamic colors: Bright white/accent text when active, subtle dark gray when inactive
             local nameColor = activeState and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(130, 130, 145)
             local valColor = activeState and Color3.fromRGB(185, 115, 117) or Color3.fromRGB(90, 90, 105)
             
@@ -573,7 +574,6 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         Parent = screenGui
     })
     
-    -- Small transparent 1x1 Modal controller button to lock mouse camera propagation while menu is open (does not block dragging)
     local modalBlocker = Instance.new("TextButton")
     modalBlocker.Name = getRandomName()
     modalBlocker.Size = UDim2.new(0, 1, 0, 1)
@@ -631,7 +631,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     local hubLabel = create("TextLabel", {
         LayoutOrder = 1,
         BackgroundTransparency = 1,
-        Text = hubTitle or "DeadHub",
+        Text = hubTitle or "Lunex Hub",
         TextColor3 = Color3.fromRGB(240, 240, 245),
         TextSize = 17,
         Font = Enum.Font.Code,
@@ -651,7 +651,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     local placeLabel = create("TextLabel", {
         LayoutOrder = 3,
         BackgroundTransparency = 1,
-        Text = placeTitle or "Trident Survival",
+        Text = placeTitle or "Block Strike",
         TextColor3 = Color3.fromRGB(160, 160, 175),
         TextSize = 16,
         Font = Enum.Font.Code,
@@ -687,7 +687,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         Parent = tabsContainer
     })
     
-    local tabNames = {"Combat", "Misc", "Visuals", "Movement", "World", "Settings"}
+    local tabNames = {"Rage", "Legit", "Visuals", "Movement", "World", "Settings"}
     local numTabs = #tabNames
     local tabs = {}
     local tabFrames = {}
@@ -778,58 +778,116 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     end
     
     Window.Tabs = tabFrames
-    Window.LeftColumn = tabFrames["Combat"].LeftColumn
-    Window.CenterColumn = tabFrames["Combat"].CenterColumn
-    Window.RightColumn = tabFrames["Combat"].RightColumn
+    Window.LeftColumn = tabFrames[tabNames[1]].LeftColumn
+    Window.CenterColumn = tabFrames[tabNames[1]].CenterColumn
+    Window.RightColumn = tabFrames[tabNames[1]].RightColumn
+    
+    local tabIcons = {
+        Rage = "rbxassetid://78242793290159",
+        Legit = "rbxassetid://111457651714934",
+        Visuals = "rbxassetid://17412298151",
+        Movement = "rbxassetid://136160678435000",
+        World = "rbxassetid://11887653877",
+        Settings = "rbxassetid://8382597378"
+    }
+
+    local activeColor = Color3.fromRGB(240, 240, 245)
+    local inactiveColor = Color3.fromRGB(120, 120, 135)
+    local hoverColor = Color3.fromRGB(200, 200, 215)
     
     for i, name in ipairs(tabNames) do
         local tabBtn = create("TextButton", {
             LayoutOrder = (i * 2) - 1,
-            Text = name,
-            Font = Enum.Font.Code,
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Center,
-            TextYAlignment = Enum.TextYAlignment.Center,
-            AutomaticSize = Enum.AutomaticSize.None,
+            Text = "",
+            AutoButtonColor = false,
             Size = UDim2.new(1 / numTabs, 0, 1, 0),
             BackgroundTransparency = 1,
             BorderSizePixel = 0,
             Parent = tabsContainer
         })
         
+        local btnLayout = create("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            HorizontalAlignment = Enum.HorizontalAlignment.Center,
+            VerticalAlignment = Enum.VerticalAlignment.Center,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 5),
+            Parent = tabBtn
+        })
+        
+        local iconImg = nil
+        if tabIcons[name] and tabIcons[name] ~= "" then
+            iconImg = create("ImageLabel", {
+                LayoutOrder = 1,
+                Size = UDim2.new(0, 14, 0, 14),
+                Image = tabIcons[name],
+                ImageColor3 = (i == 1) and activeColor or inactiveColor,
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+                Parent = tabBtn
+            })
+        end
+        
+        local txtLbl = create("TextLabel", {
+            LayoutOrder = 2,
+            Text = name,
+            Font = Enum.Font.Code,
+            TextSize = 13,
+            TextColor3 = (i == 1) and activeColor or inactiveColor,
+            BackgroundTransparency = 1,
+            AutomaticSize = Enum.AutomaticSize.X,
+            Size = UDim2.new(0, 0, 1, 0),
+            Parent = tabBtn
+        })
+        
         if i == 1 then
-            tabBtn.TextColor3 = Color3.fromRGB(240, 240, 245)
             activeTab = tabBtn
-        else
-            tabBtn.TextColor3 = Color3.fromRGB(120, 120, 135)
+        end
+        
+        local function setBtnColor(col)
+            pcall(function()
+                TweenService:Create(txtLbl, TweenInfo.new(0.15), {TextColor3 = col}):Play()
+                if iconImg then
+                    TweenService:Create(iconImg, TweenInfo.new(0.15), {ImageColor3 = col}):Play()
+                end
+            end)
         end
         
         tabBtn.MouseEnter:Connect(function()
-            if tabBtn ~= activeTab then
-                TweenService:Create(tabBtn, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(200, 200, 215)}):Play()
-            end
+            pcall(function()
+                if tabBtn ~= activeTab then
+                    setBtnColor(hoverColor)
+                end
+            end)
         end)
         
         tabBtn.MouseLeave:Connect(function()
-            if tabBtn ~= activeTab then
-                TweenService:Create(tabBtn, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(120, 120, 135)}):Play()
-            end
+            pcall(function()
+                if tabBtn ~= activeTab then
+                    setBtnColor(inactiveColor)
+                end
+            end)
         end)
         
         tabBtn.MouseButton1Click:Connect(function()
-            if activeTab and activeTab ~= tabBtn then
-                TweenService:Create(activeTab, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(120, 120, 135)}):Play()
-            end
-            activeTab = tabBtn
-            TweenService:Create(tabBtn, TweenInfo.new(0.15), {TextColor3 = Color3.fromRGB(240, 240, 245)}):Play()
-            
-            if activeTabFrame then
-                activeTabFrame.Visible = false
-            end
-            if tabFrames[name] then
-                activeTabFrame = tabFrames[name].Frame
-                activeTabFrame.Visible = true
-            end
+            pcall(function()
+                if activeTab and activeTab ~= tabBtn then
+                    local prevTxt = activeTab:FindFirstChildOfClass("TextLabel")
+                    local prevImg = activeTab:FindFirstChildOfClass("ImageLabel")
+                    if prevTxt then TweenService:Create(prevTxt, TweenInfo.new(0.15), {TextColor3 = inactiveColor}):Play() end
+                    if prevImg then TweenService:Create(prevImg, TweenInfo.new(0.15), {ImageColor3 = inactiveColor}):Play() end
+                end
+                activeTab = tabBtn
+                setBtnColor(activeColor)
+                
+                if activeTabFrame then
+                    activeTabFrame.Visible = false
+                end
+                if tabFrames[name] then
+                    activeTabFrame = tabFrames[name].Frame
+                    activeTabFrame.Visible = true
+                end
+            end)
         end)
         
         tabs[name] = tabBtn
@@ -900,6 +958,16 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         })
     end
     
+    -- Dynamic Column Titles Mapping per Tab
+    local tabColumnTitles = {
+        Rage = { "Combat", "Weapon", "Anti aim" },
+        Legit = { "Legit Aimbot", "Targeting", "Checks" },
+        Visuals = { "Players", "Map", "Player" },
+        Movement = { "Player", "", "" },
+        World = { "Map", "Sky", "Terra" },
+        Settings = { "UI Settings", "Config", "Credits" }
+    }
+
     local sectionHeadersContainer = create("Frame", {
         Size = UDim2.new(1, -28, 0, 20),
         Position = UDim2.new(0, 14, 0, 78),
@@ -911,7 +979,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         Size = UDim2.new(0.31, 0, 1, 0),
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundTransparency = 1,
-        Text = sectionTitle1 or "Main Section",
+        Text = sectionTitle1 or "Combat",
         TextColor3 = Color3.fromRGB(190, 190, 205),
         TextSize = 13,
         Font = Enum.Font.Code,
@@ -924,7 +992,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         Position = UDim2.new(0.5, 0, 0, 0),
         AnchorPoint = Vector2.new(0.5, 0),
         BackgroundTransparency = 1,
-        Text = sectionTitle2 or "Targeting Settings",
+        Text = sectionTitle2 or "Weapon",
         TextColor3 = Color3.fromRGB(190, 190, 205),
         TextSize = 13,
         Font = Enum.Font.Code,
@@ -937,13 +1005,28 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         Position = UDim2.new(1, 0, 0, 0),
         AnchorPoint = Vector2.new(1, 0),
         BackgroundTransparency = 1,
-        Text = sectionTitle3 or "Extra Features",
+        Text = sectionTitle3 or "Anti aim",
         TextColor3 = Color3.fromRGB(190, 190, 205),
         TextSize = 13,
         Font = Enum.Font.Code,
         TextXAlignment = Enum.TextXAlignment.Center,
         Parent = sectionHeadersContainer
     })
+
+    local function updateColumnHeaderTitles(tabName)
+        local titles = tabColumnTitles[tabName] or { "Main Section", "Targeting", "Extra" }
+        leftSectionLabel.Text = titles[1] or ""
+        centerSectionLabel.Text = titles[2] or ""
+        rightSectionLabel.Text = titles[3] or ""
+    end
+
+    -- Hook tab button click to update column header labels
+    for tabName, btn in pairs(tabs) do
+        btn.MouseButton1Click:Connect(function()
+            updateColumnHeaderTitles(tabName)
+        end)
+    end
+    updateColumnHeaderTitles("Rage")
     
     -- Method: Window:AddGroupbox(columnParent, titleText)
     function Window:AddGroupbox(columnParent, titleText)
@@ -1057,7 +1140,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             BackgroundTransparency = 1,
             Text = "",
             AutoButtonColor = false,
-            Parent = columnParent or (Window.Tabs and Window.Tabs["Combat"] and Window.Tabs["Combat"].LeftColumn)
+            Parent = columnParent or (Window.Tabs and Window.Tabs["Rage"] and Window.Tabs["Rage"].LeftColumn)
         })
         
         local state = defaultState or false
@@ -1266,7 +1349,6 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             keybindBtn.MouseButton1Click:Connect(function()
                 local now = os.clock()
                 if now - lastClickTime < 0.35 then
-                    -- Double Left Click Reset / Clear Keybind
                     binding = false
                     currentKey = nil
                     keybindBtn.Text = "[NONE]"
@@ -1282,6 +1364,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 binding = true
                 keybindBtn.Text = "[...]"
                 keybindBtn.TextColor3 = Color3.fromRGB(245, 195, 68)
+                Window:UpdateKeybindInList(text or "Toggle", "...", currentMode, false)
                 
                 local conn
                 conn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -1338,15 +1421,15 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             
             return {
                 SetKey = function(newKey) currentKey = newKey; updateKeybindDisplay() end,
-                SetMode = function(newMode) currentMode = newMode; updateKeybindDisplay() end
+                GetKey = function() return currentKey end
             }
         end
-
+        
         function toggleObj:AddColorPicker(defaultColor, colorCallback)
-            local currentColor = defaultColor or Color3.fromRGB(120, 77, 78)
+            local currentColor = defaultColor or Color3.fromRGB(255, 255, 255)
             
             local pickerBtn = create("TextButton", {
-                Size = UDim2.new(0, 20, 0, 14),
+                Size = UDim2.new(0, 18, 0, 12),
                 Position = UDim2.new(1, -26, 0, 3),
                 BackgroundColor3 = currentColor,
                 BorderSizePixel = 0,
@@ -1358,7 +1441,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             pickerBtnRef = pickerBtn
             updateSubControlPositions()
             
-            local pickerStroke = create("UIStroke", {
+            local pickerBtnStroke = create("UIStroke", {
                 Thickness = 1.0,
                 Color = Color3.fromRGB(48, 48, 56),
                 LineJoinMode = Enum.LineJoinMode.Miter,
@@ -1366,9 +1449,9 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = pickerBtn
             })
             
-            -- Pixel Color Popup Frame (Width: 172, Height: 155)
+            -- Pixel Color Palette Popup (24 Color Grid + HEX Input)
             local pickerPopup = create("Frame", {
-                Size = UDim2.new(0, 172, 0, 155),
+                Size = UDim2.new(0, 175, 0, 155),
                 Position = UDim2.new(1, 6, 0, 0),
                 BackgroundColor3 = Color3.fromRGB(14, 14, 18),
                 BorderSizePixel = 0,
@@ -1377,195 +1460,129 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = pickerBtn
             })
             
-            local popStroke = create("UIStroke", {
+            local popupStroke = create("UIStroke", {
                 Thickness = 1.4,
                 Color = Color3.fromRGB(120, 77, 78),
                 LineJoinMode = Enum.LineJoinMode.Miter,
                 ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
                 Parent = pickerPopup
             })
-            
-            -- Title Header
-            local titleLabel = create("TextLabel", {
-                Size = UDim2.new(1, -12, 0, 18),
-                Position = UDim2.new(0, 8, 0, 6),
-                BackgroundTransparency = 1,
-                Font = Enum.Font.Code,
-                TextSize = 11,
-                TextColor3 = Color3.fromRGB(170, 170, 185),
-                Text = "PIXEL PALETTE",
-                TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 201,
-                Parent = pickerPopup
-            })
-            
-            -- Grid Container for 24 Pixel Color Squares (6 columns x 4 rows)
-            local gridFrame = create("Frame", {
-                Size = UDim2.new(1, -16, 0, 92),
-                Position = UDim2.new(0, 8, 0, 26),
+
+            local gridContainer = create("Frame", {
+                Size = UDim2.new(1, -12, 0, 108),
+                Position = UDim2.new(0, 6, 0, 6),
                 BackgroundTransparency = 1,
                 ZIndex = 201,
                 Parent = pickerPopup
             })
-            
+
             local gridLayout = create("UIGridLayout", {
-                CellSize = UDim2.new(0, 21, 0, 19),
-                CellPadding = UDim2.new(0, 6, 0, 5),
+                CellSize = UDim2.new(0, 22, 0, 22),
+                CellPadding = UDim2.new(0, 5, 0, 5),
                 SortOrder = Enum.SortOrder.LayoutOrder,
-                Parent = gridFrame
+                Parent = gridContainer
             })
-            
-            -- HEX Input at bottom
-            local hexInput = create("TextBox", {
-                Size = UDim2.new(1, -16, 0, 20),
-                Position = UDim2.new(0, 8, 0, 126),
+
+            local presetColors = {
+                Color3.fromRGB(255, 255, 255), Color3.fromRGB(200, 200, 200), Color3.fromRGB(120, 120, 120), Color3.fromRGB(30, 30, 30),
+                Color3.fromRGB(255, 50, 50),   Color3.fromRGB(255, 120, 0),   Color3.fromRGB(255, 200, 0),   Color3.fromRGB(50, 220, 50),
+                Color3.fromRGB(0, 220, 220),   Color3.fromRGB(30, 140, 255),  Color3.fromRGB(130, 60, 255),  Color3.fromRGB(255, 0, 150),
+                Color3.fromRGB(180, 0, 0),     Color3.fromRGB(200, 80, 0),    Color3.fromRGB(180, 150, 0),   Color3.fromRGB(20, 140, 20),
+                Color3.fromRGB(0, 140, 140),   Color3.fromRGB(10, 80, 180),   Color3.fromRGB(80, 20, 180),   Color3.fromRGB(180, 0, 90),
+                Color3.fromRGB(120, 77, 78),   Color3.fromRGB(185, 115, 117), Color3.fromRGB(90, 45, 45),    Color3.fromRGB(45, 20, 25)
+            }
+
+            local colorSquareBorders = {}
+
+            local function updateColor(newColor, skipHex)
+                currentColor = newColor
+                pickerBtn.BackgroundColor3 = currentColor
+                for c, border in pairs(colorSquareBorders) do
+                    local isMatch = (math.abs(c.R - currentColor.R) < 0.02 and math.abs(c.G - currentColor.G) < 0.02 and math.abs(c.B - currentColor.B) < 0.02)
+                    border.Color = isMatch and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(35, 35, 42)
+                    border.Thickness = isMatch and 1.8 or 1.0
+                end
+                if colorCallback then pcall(colorCallback, currentColor) end
+            end
+
+            for idx, colorVal in ipairs(presetColors) do
+                local sqBtn = create("TextButton", {
+                    Text = "",
+                    AutoButtonColor = false,
+                    BackgroundColor3 = colorVal,
+                    BorderSizePixel = 0,
+                    ZIndex = 202,
+                    Parent = gridContainer
+                })
+
+                local sqStroke = create("UIStroke", {
+                    Thickness = 1.0,
+                    Color = Color3.fromRGB(35, 35, 42),
+                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                    Parent = sqBtn
+                })
+                colorSquareBorders[colorVal] = sqStroke
+
+                sqBtn.MouseButton1Click:Connect(function()
+                    updateColor(colorVal)
+                end)
+            end
+
+            local hexBox = create("TextBox", {
+                Size = UDim2.new(1, -12, 0, 24),
+                Position = UDim2.new(0, 6, 0, 122),
                 BackgroundColor3 = Color3.fromRGB(20, 20, 26),
                 BorderSizePixel = 0,
                 Font = Enum.Font.Code,
                 TextSize = 11,
-                TextColor3 = Color3.fromRGB(240, 240, 245),
+                TextColor3 = Color3.fromRGB(220, 220, 235),
                 Text = "#" .. currentColor:ToHex():upper(),
-                ZIndex = 201,
+                PlaceholderText = "#HEXCode",
+                TextXAlignment = Enum.TextXAlignment.Center,
+                ZIndex = 202,
                 Parent = pickerPopup
             })
-            
-            local hexStroke = create("UIStroke", {
+
+            create("UIStroke", {
                 Thickness = 1.0,
-                Color = Color3.fromRGB(48, 48, 56),
+                Color = Color3.fromRGB(50, 50, 60),
                 ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-                Parent = hexInput
+                Parent = hexBox
             })
-            
-            -- 24 Curated Pixel Colors
-            local presetColors = {
-                Color3.fromRGB(255, 59, 48),    -- Red
-                Color3.fromRGB(255, 149, 0),   -- Orange
-                Color3.fromRGB(255, 204, 0),   -- Yellow
-                Color3.fromRGB(52, 199, 89),    -- Green
-                Color3.fromRGB(0, 199, 190),   -- Mint
-                Color3.fromRGB(48, 176, 199),   -- Teal
-                
-                Color3.fromRGB(50, 173, 230),   -- Cyan
-                Color3.fromRGB(0, 122, 255),    -- Blue
-                Color3.fromRGB(88, 86, 214),    -- Indigo
-                Color3.fromRGB(175, 82, 222),   -- Purple
-                Color3.fromRGB(255, 45, 85),    -- Pink
-                Color3.fromRGB(255, 55, 95),    -- Rose
-                
-                Color3.fromRGB(139, 0, 0),      -- Crimson
-                Color3.fromRGB(120, 77, 78),    -- Linoria Rust
-                Color3.fromRGB(212, 175, 55),   -- Gold
-                Color3.fromRGB(162, 232, 221),  -- Pastel Mint
-                Color3.fromRGB(214, 199, 255),  -- Lavender
-                Color3.fromRGB(255, 255, 255),  -- White
-                
-                Color3.fromRGB(176, 176, 192),  -- Silver
-                Color3.fromRGB(58, 58, 76),     -- Dark Gray
-                Color3.fromRGB(26, 26, 36),     -- Midnight
-                Color3.fromRGB(0, 0, 0),        -- Black
-                Color3.fromRGB(230, 57, 70),    -- Vivid Crimson
-                Color3.fromRGB(0, 245, 212)     -- Electric Aqua
-            }
-            
-            local colorSquareStrokes = {}
-            
-            local function selectColor(newColor, isCustomHex)
-                currentColor = newColor
-                pickerBtn.BackgroundColor3 = currentColor
-                if not isCustomHex then
-                    pcall(function()
-                        hexInput.Text = "#" .. currentColor:ToHex():upper()
-                    end)
-                end
-                
-                -- Update active strokes on squares
-                for c, stroke in pairs(colorSquareStrokes) do
-                    if c == currentColor then
-                        stroke.Color = Color3.fromRGB(255, 255, 255)
-                        stroke.Thickness = 1.6
-                    else
-                        stroke.Color = Color3.fromRGB(38, 38, 46)
-                        stroke.Thickness = 1.0
-                    end
-                end
-                
-                if colorCallback then
-                    safeCallback(colorCallback, currentColor)
-                end
-            end
-            
-            for i, col in ipairs(presetColors) do
-                local sq = create("TextButton", {
-                    BackgroundColor3 = col,
-                    BorderSizePixel = 0,
-                    Text = "",
-                    AutoButtonColor = false,
-                    LayoutOrder = i,
-                    ZIndex = 202,
-                    Parent = gridFrame
-                })
-                
-                local sqStroke = create("UIStroke", {
-                    Thickness = (col == currentColor) and 1.6 or 1.0,
-                    Color = (col == currentColor) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(38, 38, 46),
-                    LineJoinMode = Enum.LineJoinMode.Miter,
-                    ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-                    Parent = sq
-                })
-                
-                colorSquareStrokes[col] = sqStroke
-                
-                sq.MouseButton1Click:Connect(function()
-                    selectColor(col, false)
-                end)
-                
-                sq.MouseEnter:Connect(function()
-                    if col ~= currentColor then
-                        sqStroke.Color = Color3.fromRGB(160, 160, 180)
-                    end
-                end)
-                sq.MouseLeave:Connect(function()
-                    if col ~= currentColor then
-                        sqStroke.Color = Color3.fromRGB(38, 38, 46)
-                    end
-                end)
-            end
-            
-            hexInput.FocusLost:Connect(function(enterPressed)
-                local txt = hexInput.Text:gsub("#", "")
+
+            hexBox.FocusLost:Connect(function(enterPressed)
+                local txt = hexBox.Text:gsub("#", "")
                 if #txt == 6 then
-                    local ok, col = pcall(function() return Color3.fromHex(txt) end)
-                    if ok and col then
-                        selectColor(col, true)
+                    local ok, parsedCol = pcall(function() return Color3.fromHex(txt) end)
+                    if ok and parsedCol then
+                        updateColor(parsedCol, true)
+                        hexBox.Text = "#" .. parsedCol:ToHex():upper()
                     end
                 end
             end)
             
             pickerBtn.MouseButton1Click:Connect(function()
-                if activeColorPicker and activeColorPicker ~= pickerPopup then
-                    activeColorPicker.Visible = false
-                end
-                pickerPopup.Visible = not pickerPopup.Visible
-                if pickerPopup.Visible then
-                    activeColorPicker = pickerPopup
-                    activeCloseFunc = function()
-                        pickerPopup.Visible = false
-                        activeColorPicker = nil
-                        activeCloseFunc = nil
+                pcall(function()
+                    if activeColorPicker and activeColorPicker ~= pickerPopup then
+                        activeColorPicker.Visible = false
                     end
-                else
-                    activeColorPicker = nil
-                    activeCloseFunc = nil
-                end
+                    pickerPopup.Visible = not pickerPopup.Visible
+                    if pickerPopup.Visible then
+                        activeColorPicker = pickerPopup
+                        activeCloseFunc = function()
+                            pickerPopup.Visible = false
+                            if activeColorPicker == pickerPopup then activeColorPicker = nil end
+                        end
+                        updateColor(currentColor)
+                    else
+                        if activeColorPicker == pickerPopup then activeColorPicker = nil end
+                    end
+                end)
             end)
             
             return {
-                SetColor = function(newColor)
-                    selectColor(newColor, false)
-                end,
-                GetColor = function()
-                    return currentColor
-                end
+                SetColor = updateColor,
+                GetColor = function() return currentColor end
             }
         end
         
@@ -1574,14 +1591,18 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     
     -- Method: Window:AddSlider(columnParent, text, min, max, defaultVal, suffix, callback)
     function Window:AddSlider(columnParent, text, min, max, defaultVal, suffix, callback)
-        local parentCol = columnParent or Window.LeftColumn
-        if typeof(text) == "number" then
-            callback = suffix
-            suffix = defaultVal
-            defaultVal = max
-            max = min
-            min = text
-            text = "Slider"
+        if type(min) == "string" then
+            local tempText = min
+            local tempMin = max
+            local tempMax = defaultVal
+            local tempDef = suffix
+            local tempSuf = callback
+            text = tempText
+            min = tempMin or 0
+            max = tempMax or 100
+            defaultVal = tempDef or min
+            suffix = tempSuf or ""
+            callback = arguments and arguments[6]
         end
         
         min = min or 0
@@ -1592,35 +1613,35 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         local sliderFrame = create("Frame", {
             Size = UDim2.new(1, 0, 0, 36),
             BackgroundTransparency = 1,
-            Parent = parentCol
+            Parent = columnParent or (Window.Tabs and Window.Tabs["Rage"] and Window.Tabs["Rage"].LeftColumn)
         })
         
-        local titleLbl = create("TextLabel", {
-            Size = UDim2.new(0.6, 0, 0, 18),
+        local sliderLabel = create("TextLabel", {
+            Size = UDim2.new(0.65, 0, 0, 16),
             Position = UDim2.new(0, 10, 0, 0),
             BackgroundTransparency = 1,
-            Font = Enum.Font.Code,
-            TextSize = 12,
-            TextColor3 = Color3.fromRGB(200, 200, 215),
-            TextXAlignment = Enum.TextXAlignment.Left,
             Text = text or "Slider",
-            Parent = sliderFrame
-        })
-        
-        local valueLbl = create("TextLabel", {
-            Size = UDim2.new(0.4, -10, 0, 18),
-            Position = UDim2.new(0.6, 0, 0, 0),
-            BackgroundTransparency = 1,
             Font = Enum.Font.Code,
-            TextSize = 12,
-            TextColor3 = Color3.fromRGB(160, 160, 175),
-            TextXAlignment = Enum.TextXAlignment.Right,
-            Text = tostring(defaultVal) .. suffix,
+            TextSize = 13,
+            TextColor3 = Color3.fromRGB(240, 240, 245),
+            TextXAlignment = Enum.TextXAlignment.Left,
             Parent = sliderFrame
         })
         
-        local trackFrame = create("TextButton", {
-            Size = UDim2.new(1, -20, 0, 12),
+        local valueLabel = create("TextLabel", {
+            Size = UDim2.new(0.35, -10, 0, 16),
+            Position = UDim2.new(0.65, 0, 0, 0),
+            BackgroundTransparency = 1,
+            Text = tostring(defaultVal) .. suffix,
+            Font = Enum.Font.Code,
+            TextSize = 13,
+            TextColor3 = Color3.fromRGB(185, 115, 117),
+            TextXAlignment = Enum.TextXAlignment.Right,
+            Parent = sliderFrame
+        })
+        
+        local track = create("TextButton", {
+            Size = UDim2.new(1, -20, 0, 8),
             Position = UDim2.new(0, 10, 0, 20),
             BackgroundColor3 = Color3.fromRGB(22, 22, 28),
             BorderSizePixel = 0,
@@ -1634,111 +1655,107 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             Color = Color3.fromRGB(48, 48, 56),
             LineJoinMode = Enum.LineJoinMode.Miter,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-            Parent = trackFrame
+            Parent = track
         })
         
-        local fillRatio = (defaultVal - min) / (max - min)
-        local fillFrame = create("Frame", {
-            Size = UDim2.new(fillRatio, 0, 1, 0),
+        local fillPercent = (defaultVal - min) / math.max(1, max - min)
+        local fill = create("Frame", {
+            Size = UDim2.new(fillPercent, 0, 1, 0),
             BackgroundColor3 = Color3.fromRGB(120, 77, 78),
             BorderSizePixel = 0,
-            Parent = trackFrame
+            Parent = track
         })
         
-        local val = defaultVal
-        local dragging = false
+        local fillStroke = create("UIStroke", {
+            Thickness = 1.0,
+            Color = Color3.fromRGB(185, 115, 117),
+            LineJoinMode = Enum.LineJoinMode.Miter,
+            ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+            Parent = fill
+        })
         
-        local function updateSlider(inputPos, isRelease)
-            local absPos = trackFrame.AbsolutePosition.X
-            local absSize = trackFrame.AbsoluteSize.X
-            local relX = math.clamp((inputPos - absPos) / absSize, 0, 1)
-            val = math.floor(min + (max - min) * relX + 0.5)
-            val = math.clamp(val, min, max)
-            
-            local newRatio = (val - min) / (max - min)
-            fillFrame.Size = UDim2.new(newRatio, 0, 1, 0)
-            valueLbl.Text = tostring(val) .. suffix
-            
-            -- BAC Safe Deferred Slider Execution: Only fire callback when user releases mouse/touch or sets value programmatically!
-            if isRelease then
-                if callback then pcall(callback, val) end
-            end
+        local currentValue = defaultVal
+        local sliding = false
+        
+        local function updateSlider(inputPos)
+            pcall(function()
+                local trackAbsPos = track.AbsolutePosition.X
+                local trackAbsSize = track.AbsoluteSize.X
+                local relX = math.clamp(inputPos.X - trackAbsPos, 0, trackAbsSize)
+                local pct = relX / trackAbsSize
+                
+                currentValue = math.floor(min + (max - min) * pct + 0.5)
+                currentValue = math.clamp(currentValue, min, max)
+                
+                fill.Size = UDim2.new(pct, 0, 1, 0)
+                valueLabel.Text = tostring(currentValue) .. suffix
+                
+                if callback then
+                    pcall(callback, currentValue)
+                end
+            end)
         end
         
-        trackFrame.InputBegan:Connect(function(input)
+        track.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                updateSlider(input.Position.X, true)
+                sliding = true
+                updateSlider(input.Position)
             end
         end)
         
-        UserInputService.InputEnded:Connect(function(input)
+        track.InputEnded:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                if dragging then
-                    updateSlider(input.Position.X, true)
-                end
-                dragging = false
+                sliding = false
             end
         end)
         
         UserInputService.InputChanged:Connect(function(input)
-            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                updateSlider(input.Position.X, false)
+            if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                updateSlider(input.Position)
             end
         end)
         
         return {
-            SetValue = function(newVal)
-                val = math.clamp(newVal, min, max)
-                local r = (val - min) / (max - min)
-                fillFrame.Size = UDim2.new(r, 0, 1, 0)
-                valueLbl.Text = tostring(val) .. suffix
-                if callback then pcall(callback, val) end
+            SetValue = function(val)
+                currentValue = math.clamp(val, min, max)
+                local pct = (currentValue - min) / math.max(1, max - min)
+                fill.Size = UDim2.new(pct, 0, 1, 0)
+                valueLabel.Text = tostring(currentValue) .. suffix
+                if callback then pcall(callback, currentValue) end
             end,
-            GetValue = function() return val end
+            GetValue = function() return currentValue end
         }
     end
-    
-    -- Method: Window:AddDropdown(columnParent, text, options, defaultVal, callback)
-    function Window:AddDropdown(columnParent, text, options, defaultVal, callback)
-        local parentCol = columnParent or Window.LeftColumn
-        if type(options) == "function" then
-            callback = options
-            options = text
-            text = "Dropdown"
-        end
+
+    -- Method: Window:AddDropdown(columnParent, text, options, defaultSelected, callback)
+    function Window:AddDropdown(columnParent, text, options, defaultSelected, callback)
         options = options or {}
+        local selected = defaultSelected or options[1] or ""
         
         local dropdownFrame = create("Frame", {
-            Size = UDim2.new(1, 0, 0, 42),
+            Size = UDim2.new(1, 0, 0, 44),
             BackgroundTransparency = 1,
-            Parent = parentCol
+            Parent = columnParent or (Window.Tabs and Window.Tabs["Rage"] and Window.Tabs["Rage"].LeftColumn)
         })
         
-        local titleLbl = create("TextLabel", {
+        local label = create("TextLabel", {
             Size = UDim2.new(1, -20, 0, 16),
             Position = UDim2.new(0, 10, 0, 0),
             BackgroundTransparency = 1,
-            Font = Enum.Font.Code,
-            TextSize = 12,
-            TextColor3 = Color3.fromRGB(200, 200, 215),
-            TextXAlignment = Enum.TextXAlignment.Left,
             Text = text or "Dropdown",
+            Font = Enum.Font.Code,
+            TextSize = 13,
+            TextColor3 = Color3.fromRGB(240, 240, 245),
+            TextXAlignment = Enum.TextXAlignment.Left,
             Parent = dropdownFrame
         })
         
-        local selectedVal = defaultVal or options[1] or "None"
-        
-        local selectBtn = create("TextButton", {
+        local mainBtn = create("TextButton", {
             Size = UDim2.new(1, -20, 0, 22),
             Position = UDim2.new(0, 10, 0, 18),
             BackgroundColor3 = Color3.fromRGB(20, 20, 26),
             BorderSizePixel = 0,
-            Font = Enum.Font.Code,
-            TextSize = 12,
-            TextColor3 = Color3.fromRGB(220, 220, 235),
-            Text = "  " .. tostring(selectedVal),
-            TextXAlignment = Enum.TextXAlignment.Left,
+            Text = "",
             AutoButtonColor = false,
             Parent = dropdownFrame
         })
@@ -1748,140 +1765,251 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             Color = Color3.fromRGB(48, 48, 56),
             LineJoinMode = Enum.LineJoinMode.Miter,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-            Parent = selectBtn
+            Parent = mainBtn
+        })
+        
+        local btnText = create("TextLabel", {
+            Size = UDim2.new(1, -24, 1, 0),
+            Position = UDim2.new(0, 8, 0, 0),
+            BackgroundTransparency = 1,
+            Text = tostring(selected),
+            Font = Enum.Font.Code,
+            TextSize = 12,
+            TextColor3 = Color3.fromRGB(220, 220, 235),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = mainBtn
         })
         
         local arrowLbl = create("TextLabel", {
-            Size = UDim2.new(0, 20, 1, 0),
-            Position = UDim2.new(1, -20, 0, 0),
+            Size = UDim2.new(0, 16, 1, 0),
+            Position = UDim2.new(1, -18, 0, 0),
             BackgroundTransparency = 1,
-            Font = Enum.Font.Code,
-            TextSize = 12,
-            TextColor3 = Color3.fromRGB(150, 150, 165),
             Text = "v",
-            Parent = selectBtn
+            Font = Enum.Font.Code,
+            TextSize = 11,
+            TextColor3 = Color3.fromRGB(150, 150, 165),
+            TextXAlignment = Enum.TextXAlignment.Center,
+            Parent = mainBtn
         })
         
-        local optionContainer = create("Frame", {
+        local optionsContainer = create("Frame", {
             Size = UDim2.new(1, 0, 0, 0),
-            Position = UDim2.new(0, 0, 1, 4),
+            Position = UDim2.new(0, 0, 1, 2),
             BackgroundColor3 = Color3.fromRGB(14, 14, 18),
             BorderSizePixel = 0,
             Visible = false,
-            ZIndex = 150,
             ClipsDescendants = true,
-            Parent = selectBtn
+            ZIndex = 150,
+            Parent = mainBtn
         })
         
-        local popStroke = create("UIStroke", {
+        create("UIStroke", {
             Thickness = 1.0,
             Color = Color3.fromRGB(120, 77, 78),
-            LineJoinMode = Enum.LineJoinMode.Miter,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-            Parent = optionContainer
+            Parent = optionsContainer
         })
         
-        local optLayout = create("UIListLayout", {
+        local optionLayout = create("UIListLayout", {
             SortOrder = Enum.SortOrder.LayoutOrder,
             Padding = UDim.new(0, 2),
-            Parent = optionContainer
+            Parent = optionsContainer
         })
         
-        local optPadding = create("UIPadding", {
+        create("UIPadding", {
             PaddingTop = UDim.new(0, 4),
             PaddingBottom = UDim.new(0, 4),
             PaddingLeft = UDim.new(0, 4),
             PaddingRight = UDim.new(0, 4),
-            Parent = optionContainer
+            Parent = optionsContainer
         })
         
-        local function refreshOptions(newOptions)
-            for _, child in ipairs(optionContainer:GetChildren()) do
-                if child:IsA("TextButton") then child:Destroy() end
-            end
+        for idx, opt in ipairs(options) do
+            local optBtn = create("TextButton", {
+                Size = UDim2.new(1, 0, 0, 18),
+                BackgroundTransparency = 1,
+                Font = Enum.Font.Code,
+                TextSize = 11,
+                TextColor3 = (opt == selected) and Color3.fromRGB(245, 245, 250) or Color3.fromRGB(140, 140, 155),
+                Text = tostring(opt),
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 151,
+                Parent = optionsContainer
+            })
             
-            options = newOptions or options
-            local totalHeight = #options * 20 + 8
-            optionContainer.Size = UDim2.new(1, 0, 0, math.min(totalHeight, 140))
-            
-            for idx, opt in ipairs(options) do
-                local optBtn = create("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 18),
-                    BackgroundTransparency = 1,
-                    Font = Enum.Font.Code,
-                    TextSize = 12,
-                    TextColor3 = (opt == selectedVal) and Color3.fromRGB(240, 240, 245) or Color3.fromRGB(140, 140, 155),
-                    Text = "  " .. tostring(opt),
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    ZIndex = 151,
-                    Parent = optionContainer
-                })
-                
-                optBtn.MouseButton1Click:Connect(function()
-                    selectedVal = opt
-                    selectBtn.Text = "  " .. tostring(selectedVal)
-                    optionContainer.Visible = false
-                    if callback then pcall(callback, selectedVal) end
-                    refreshOptions(options)
-                end)
-            end
+            optBtn.MouseButton1Click:Connect(function()
+                selected = opt
+                btnText.Text = tostring(selected)
+                optionsContainer.Visible = false
+                if callback then pcall(callback, selected) end
+            end)
         end
         
-        refreshOptions(options)
-        
-        selectBtn.MouseButton1Click:Connect(function()
-            optionContainer.Visible = not optionContainer.Visible
+        mainBtn.MouseButton1Click:Connect(function()
+            local totalH = (#options * 20) + 8
+            optionsContainer.Size = UDim2.new(1, 0, 0, math.min(totalH, 140))
+            optionsContainer.Visible = not optionsContainer.Visible
         end)
         
         return {
-            SetOptions = refreshOptions,
-            SetValue = function(val)
-                selectedVal = val
-                selectBtn.Text = "  " .. tostring(selectedVal)
-                if callback then pcall(callback, selectedVal) end
-                refreshOptions(options)
+            SetSelected = function(val)
+                selected = val
+                btnText.Text = tostring(selected)
+                if callback then pcall(callback, selected) end
             end,
-            GetValue = function() return selectedVal end
+            GetSelected = function() return selected end
         }
     end
-    
-    -- Method: Window:AddMultiDropdown(columnParent, text, options, defaultVals, callback)
-    function Window:AddMultiDropdown(columnParent, text, options, defaultVals, callback)
-        local parentCol = columnParent or Window.LeftColumn
+
+    -- Method: Window:AddMultiDropdown(columnParent, text, options, defaultSelectedMap, callback)
+    function Window:AddMultiDropdown(columnParent, text, options, defaultSelectedMap, callback)
         options = options or {}
-        defaultVals = defaultVals or {}
-        
-        local selectedMap = {}
-        for _, v in ipairs(defaultVals) do selectedMap[v] = true end
+        local selectedMap = defaultSelectedMap or {}
         
         local dropdownFrame = create("Frame", {
-            Size = UDim2.new(1, 0, 0, 42),
+            Size = UDim2.new(1, 0, 0, 44),
             BackgroundTransparency = 1,
-            Parent = parentCol
+            Parent = columnParent or (Window.Tabs and Window.Tabs["Rage"] and Window.Tabs["Rage"].LeftColumn)
         })
         
-        local titleLbl = create("TextLabel", {
+        local label = create("TextLabel", {
             Size = UDim2.new(1, -20, 0, 16),
             Position = UDim2.new(0, 10, 0, 0),
             BackgroundTransparency = 1,
-            Font = Enum.Font.Code,
-            TextSize = 12,
-            TextColor3 = Color3.fromRGB(200, 200, 215),
-            TextXAlignment = Enum.TextXAlignment.Left,
             Text = text or "Multi Dropdown",
+            Font = Enum.Font.Code,
+            TextSize = 13,
+            TextColor3 = Color3.fromRGB(240, 240, 245),
+            TextXAlignment = Enum.TextXAlignment.Left,
             Parent = dropdownFrame
         })
         
-        local function getDisplayText()
-            local selectedList = {}
-            for k, v in pairs(selectedMap) do
-                if v then table.insert(selectedList, k) end
+        local mainBtn = create("TextButton", {
+            Size = UDim2.new(1, -20, 0, 22),
+            Position = UDim2.new(0, 10, 0, 18),
+            BackgroundColor3 = Color3.fromRGB(20, 20, 26),
+            BorderSizePixel = 0,
+            Text = "",
+            AutoButtonColor = false,
+            Parent = dropdownFrame
+        })
+        
+        create("UIStroke", {
+            Thickness = 1.0,
+            Color = Color3.fromRGB(48, 48, 56),
+            ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+            Parent = mainBtn
+        })
+        
+        local function getSelectedString()
+            local list = {}
+            for _, opt in ipairs(options) do
+                if selectedMap[opt] then
+                    table.insert(list, opt)
+                end
             end
-            if #selectedList == 0 then return "  None" end
-            return "  " .. table.concat(selectedList, ", ")
+            if #list == 0 then return "None" end
+            return table.concat(list, ", ")
         end
         
-        local selectBtn = create("TextButton", {
+        local btnText = create("TextLabel", {
+            Size = UDim2.new(1, -24, 1, 0),
+            Position = UDim2.new(0, 8, 0, 0),
+            BackgroundTransparency = 1,
+            Text = getSelectedString(),
+            Font = Enum.Font.Code,
+            TextSize = 11,
+            TextColor3 = Color3.fromRGB(220, 220, 235),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = mainBtn
+        })
+        
+        local optionsContainer = create("Frame", {
+            Size = UDim2.new(1, 0, 0, 0),
+            Position = UDim2.new(0, 0, 1, 2),
+            BackgroundColor3 = Color3.fromRGB(14, 14, 18),
+            BorderSizePixel = 0,
+            Visible = false,
+            ClipsDescendants = true,
+            ZIndex = 150,
+            Parent = mainBtn
+        })
+        
+        create("UIStroke", {
+            Thickness = 1.0,
+            Color = Color3.fromRGB(120, 77, 78),
+            ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+            Parent = optionsContainer
+        })
+        
+        create("UIListLayout", {
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 2),
+            Parent = optionsContainer
+        })
+        
+        create("UIPadding", {
+            PaddingTop = UDim.new(0, 4),
+            PaddingBottom = UDim.new(0, 4),
+            PaddingLeft = UDim.new(0, 4),
+            PaddingRight = UDim.new(0, 4),
+            Parent = optionsContainer
+        })
+        
+        for idx, opt in ipairs(options) do
+            local optBtn = create("TextButton", {
+                Size = UDim2.new(1, 0, 0, 18),
+                BackgroundTransparency = 1,
+                Font = Enum.Font.Code,
+                TextSize = 11,
+                TextColor3 = selectedMap[opt] and Color3.fromRGB(245, 245, 250) or Color3.fromRGB(140, 140, 155),
+                Text = (selectedMap[opt] and "+ " or "- ") .. tostring(opt),
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 151,
+                Parent = optionsContainer
+            })
+            
+            optBtn.MouseButton1Click:Connect(function()
+                selectedMap[opt] = not selectedMap[opt]
+                optBtn.Text = (selectedMap[opt] and "+ " or "- ") .. tostring(opt)
+                optBtn.TextColor3 = selectedMap[opt] and Color3.fromRGB(245, 245, 250) or Color3.fromRGB(140, 140, 155)
+                btnText.Text = getSelectedString()
+                if callback then pcall(callback, selectedMap) end
+            end)
+        end
+        
+        mainBtn.MouseButton1Click:Connect(function()
+            local totalH = (#options * 20) + 8
+            optionsContainer.Size = UDim2.new(1, 0, 0, math.min(totalH, 140))
+            optionsContainer.Visible = not optionsContainer.Visible
+        end)
+        
+        return {
+            GetSelectedMap = function() return selectedMap end
+        }
+    end
+
+    -- Method: Window:AddInput(columnParent, text, placeholder, defaultVal, callback)
+    function Window:AddInput(columnParent, text, placeholder, defaultVal, callback)
+        local inputFrame = create("Frame", {
+            Size = UDim2.new(1, 0, 0, 44),
+            BackgroundTransparency = 1,
+            Parent = columnParent or (Window.Tabs and Window.Tabs["Rage"] and Window.Tabs["Rage"].LeftColumn)
+        })
+        
+        local label = create("TextLabel", {
+            Size = UDim2.new(1, -20, 0, 16),
+            Position = UDim2.new(0, 10, 0, 0),
+            BackgroundTransparency = 1,
+            Text = text or "Input",
+            Font = Enum.Font.Code,
+            TextSize = 13,
+            TextColor3 = Color3.fromRGB(240, 240, 245),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = inputFrame
+        })
+        
+        local textBox = create("TextBox", {
             Size = UDim2.new(1, -20, 0, 22),
             Position = UDim2.new(0, 10, 0, 18),
             BackgroundColor3 = Color3.fromRGB(20, 20, 26),
@@ -1889,162 +2017,42 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             Font = Enum.Font.Code,
             TextSize = 12,
             TextColor3 = Color3.fromRGB(220, 220, 235),
-            Text = getDisplayText(),
-            TextXAlignment = Enum.TextXAlignment.Left,
-            AutoButtonColor = false,
-            Parent = dropdownFrame
-        })
-        
-        local btnStroke = create("UIStroke", {
-            Thickness = 1.0,
-            Color = Color3.fromRGB(48, 48, 56),
-            LineJoinMode = Enum.LineJoinMode.Miter,
-            ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-            Parent = selectBtn
-        })
-        
-        local optionContainer = create("Frame", {
-            Size = UDim2.new(1, 0, 0, 0),
-            Position = UDim2.new(0, 0, 1, 4),
-            BackgroundColor3 = Color3.fromRGB(14, 14, 18),
-            BorderSizePixel = 0,
-            Visible = false,
-            ZIndex = 150,
-            ClipsDescendants = true,
-            Parent = selectBtn
-        })
-        
-        local popStroke = create("UIStroke", {
-            Thickness = 1.0,
-            Color = Color3.fromRGB(120, 77, 78),
-            LineJoinMode = Enum.LineJoinMode.Miter,
-            ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-            Parent = optionContainer
-        })
-        
-        local optLayout = create("UIListLayout", {
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, 2),
-            Parent = optionContainer
-        })
-        
-        local optPadding = create("UIPadding", {
-            PaddingTop = UDim.new(0, 4),
-            PaddingBottom = UDim.new(0, 4),
-            PaddingLeft = UDim.new(0, 4),
-            PaddingRight = UDim.new(0, 4),
-            Parent = optionContainer
-        })
-        
-        local function refreshOptions()
-            for _, child in ipairs(optionContainer:GetChildren()) do
-                if child:IsA("TextButton") then child:Destroy() end
-            end
-            
-            local totalHeight = #options * 20 + 8
-            optionContainer.Size = UDim2.new(1, 0, 0, math.min(totalHeight, 140))
-            
-            for idx, opt in ipairs(options) do
-                local isSel = selectedMap[opt] or false
-                local optBtn = create("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 18),
-                    BackgroundTransparency = 1,
-                    Font = Enum.Font.Code,
-                    TextSize = 12,
-                    TextColor3 = isSel and Color3.fromRGB(240, 240, 245) or Color3.fromRGB(140, 140, 155),
-                    Text = (isSel and "  [x] " or "  [ ] ") .. tostring(opt),
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    ZIndex = 151,
-                    Parent = optionContainer
-                })
-                
-                optBtn.MouseButton1Click:Connect(function()
-                    selectedMap[opt] = not selectedMap[opt]
-                    selectBtn.Text = getDisplayText()
-                    refreshOptions()
-                    if callback then pcall(callback, selectedMap) end
-                end)
-            end
-        end
-        
-        refreshOptions()
-        
-        selectBtn.MouseButton1Click:Connect(function()
-            optionContainer.Visible = not optionContainer.Visible
-        end)
-        
-        return {
-            GetValue = function() return selectedMap end
-        }
-    end
-    
-    -- Method: Window:AddInput(columnParent, text, placeholder, defaultVal, callback)
-    function Window:AddInput(columnParent, text, placeholder, defaultVal, callback)
-        local parentCol = columnParent or Window.LeftColumn
-        
-        local inputFrame = create("Frame", {
-            Size = UDim2.new(1, 0, 0, 42),
-            BackgroundTransparency = 1,
-            Parent = parentCol
-        })
-        
-        local titleLbl = create("TextLabel", {
-            Size = UDim2.new(1, -20, 0, 16),
-            Position = UDim2.new(0, 10, 0, 0),
-            BackgroundTransparency = 1,
-            Font = Enum.Font.Code,
-            TextSize = 12,
-            TextColor3 = Color3.fromRGB(200, 200, 215),
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Text = text or "Input",
-            Parent = inputFrame
-        })
-        
-        local inputBox = create("TextBox", {
-            Size = UDim2.new(1, -20, 0, 22),
-            Position = UDim2.new(0, 10, 0, 18),
-            BackgroundColor3 = Color3.fromRGB(20, 20, 26),
-            BorderSizePixel = 0,
-            Font = Enum.Font.Code,
-            TextSize = 12,
-            TextColor3 = Color3.fromRGB(240, 240, 245),
-            PlaceholderText = placeholder or "Enter text...",
-            PlaceholderColor3 = Color3.fromRGB(100, 100, 115),
             Text = defaultVal or "",
+            PlaceholderText = placeholder or "Type here...",
+            TextXAlignment = Enum.TextXAlignment.Left,
             ClearTextOnFocus = false,
             Parent = inputFrame
         })
         
-        local boxStroke = create("UIStroke", {
+        create("UIStroke", {
             Thickness = 1.0,
             Color = Color3.fromRGB(48, 48, 56),
-            LineJoinMode = Enum.LineJoinMode.Miter,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-            Parent = inputBox
+            Parent = textBox
         })
         
-        inputBox.FocusLost:Connect(function(enterPressed)
-            if callback then pcall(callback, inputBox.Text, enterPressed) end
+        create("UIPadding", {
+            PaddingLeft = UDim.new(0, 8),
+            PaddingRight = UDim.new(0, 8),
+            Parent = textBox
+        })
+        
+        textBox.FocusLost:Connect(function(enterPressed)
+            if callback then pcall(callback, textBox.Text, enterPressed) end
         end)
         
         return {
-            GetText = function() return inputBox.Text end,
-            SetText = function(txt) inputBox.Text = txt end
+            GetText = function() return textBox.Text end,
+            SetText = function(val) textBox.Text = tostring(val) end
         }
     end
-    
+
     -- Method: Window:AddButton(columnParent, text, callback)
     function Window:AddButton(columnParent, text, callback)
-        local parentCol = columnParent or Window.LeftColumn
-        if type(text) == "function" then
-            callback = text
-            text = "Button"
-        end
-        
         local btnFrame = create("Frame", {
             Size = UDim2.new(1, 0, 0, 24),
             BackgroundTransparency = 1,
-            Parent = parentCol
+            Parent = columnParent or (Window.Tabs and Window.Tabs["Rage"] and Window.Tabs["Rage"].LeftColumn)
         })
         
         local btn = create("TextButton", {
@@ -2060,79 +2068,72 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             Parent = btnFrame
         })
         
-        local btnStroke = create("UIStroke", {
+        local stroke = create("UIStroke", {
             Thickness = 1.0,
             Color = Color3.fromRGB(48, 48, 56),
-            LineJoinMode = Enum.LineJoinMode.Miter,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
             Parent = btn
         })
-        
-        btn.MouseEnter:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(30, 30, 38)}):Play()
-            TweenService:Create(btnStroke, TweenInfo.new(0.15), {Color = Color3.fromRGB(120, 77, 78)}):Play()
-        end)
-        
-        btn.MouseLeave:Connect(function()
-            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(22, 22, 28)}):Play()
-            TweenService:Create(btnStroke, TweenInfo.new(0.15), {Color = Color3.fromRGB(48, 48, 56)}):Play()
-        end)
         
         btn.MouseButton1Click:Connect(function()
             if callback then pcall(callback) end
         end)
         
-        return btn
+        btn.MouseEnter:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(32, 32, 40)}):Play()
+        end)
+        
+        btn.MouseLeave:Connect(function()
+            TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(22, 22, 28)}):Play()
+        end)
+        
+        return btnFrame
     end
-    
+
     -- Method: Window:AddDoubleButton(columnParent, text1, cb1, text2, cb2)
     function Window:AddDoubleButton(columnParent, text1, cb1, text2, cb2)
-        local parentCol = columnParent or Window.LeftColumn
-        
-        local container = create("Frame", {
+        local btnFrame = create("Frame", {
             Size = UDim2.new(1, 0, 0, 24),
             BackgroundTransparency = 1,
-            Parent = parentCol
+            Parent = columnParent or (Window.Tabs and Window.Tabs["Rage"] and Window.Tabs["Rage"].LeftColumn)
         })
         
         local btn1 = create("TextButton", {
-            Size = UDim2.new(0.5, -13, 0, 20),
+            Size = UDim2.new(0.5, -12, 0, 20),
             Position = UDim2.new(0, 10, 0, 2),
             BackgroundColor3 = Color3.fromRGB(22, 22, 28),
             BorderSizePixel = 0,
             Font = Enum.Font.Code,
-            TextSize = 12,
+            TextSize = 11,
             TextColor3 = Color3.fromRGB(220, 220, 235),
             Text = text1 or "Button 1",
             AutoButtonColor = false,
-            Parent = container
+            Parent = btnFrame
         })
         
-        local stroke1 = create("UIStroke", {
+        create("UIStroke", {
             Thickness = 1.0,
             Color = Color3.fromRGB(48, 48, 56),
-            LineJoinMode = Enum.LineJoinMode.Miter,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
             Parent = btn1
         })
         
         local btn2 = create("TextButton", {
-            Size = UDim2.new(0.5, -13, 0, 20),
-            Position = UDim2.new(0.5, 3, 0, 2),
+            Size = UDim2.new(0.5, -12, 0, 20),
+            Position = UDim2.new(0.5, 2, 0, 2),
             BackgroundColor3 = Color3.fromRGB(22, 22, 28),
             BorderSizePixel = 0,
             Font = Enum.Font.Code,
-            TextSize = 12,
+            TextSize = 11,
             TextColor3 = Color3.fromRGB(220, 220, 235),
             Text = text2 or "Button 2",
             AutoButtonColor = false,
-            Parent = container
+            Parent = btnFrame
         })
         
-        local stroke2 = create("UIStroke", {
+        create("UIStroke", {
             Thickness = 1.0,
             Color = Color3.fromRGB(48, 48, 56),
-            LineJoinMode = Enum.LineJoinMode.Miter,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
             Parent = btn2
         })
@@ -2140,17 +2141,13 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         btn1.MouseButton1Click:Connect(function() if cb1 then pcall(cb1) end end)
         btn2.MouseButton1Click:Connect(function() if cb2 then pcall(cb2) end end)
         
-        return {Btn1 = btn1, Btn2 = btn2}
+        return btnFrame
     end
-    
-    local toggleKey = Enum.KeyCode.RightShift
-    local isVisible = true
-    
+
+    -- Toggle Window Visibility with Keybind (RightShift)
     local toggleConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed and input.KeyCode == toggleKey then
-            isVisible = not isVisible
-            mainFrame.Visible = isVisible
-            modalOverlay.Visible = isVisible
+        if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
+            mainFrame.Visible = not mainFrame.Visible
         end
     end)
     
