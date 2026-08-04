@@ -1160,8 +1160,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     Window:UpdateKeybindInList(text or "Toggle", "NONE", currentMode, false)
                 elseif currentMode == "Always" then
                     keybindBtn.Text = "[ALWAYS]"
-                    updateToggle(true)
-                    Window:UpdateKeybindInList(text or "Toggle", keyStr, currentMode, true)
+                    if not state then updateToggle(true) else Window:UpdateKeybindInList(text or "Toggle", keyStr, currentMode, true) end
                 else
                     keybindBtn.Text = "[" .. keyStr .. "]"
                     Window:UpdateKeybindInList(text or "Toggle", keyStr, currentMode, active)
@@ -1222,6 +1221,9 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 
                 mBtn.MouseButton1Click:Connect(function()
                     currentMode = modeName
+                    if currentMode == "Always" then
+                        updateToggle(true)
+                    end
                     updateKeybindDisplay(state)
                     modePopup.Visible = false
                 end)
@@ -1628,7 +1630,6 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         
         local val = defaultVal
         local dragging = false
-        local lastSliderFire = 0
         
         local function updateSlider(inputPos, isRelease)
             local absPos = trackFrame.AbsolutePosition.X
@@ -1641,9 +1642,8 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             fillFrame.Size = UDim2.new(newRatio, 0, 1, 0)
             valueLbl.Text = tostring(val) .. suffix
             
-            local now = os.clock()
-            if now - lastSliderFire >= 0.04 or isRelease then
-                lastSliderFire = now
+            -- BAC Safe Deferred Slider Execution: Only fire callback when user releases mouse/touch or sets value programmatically!
+            if isRelease then
                 if callback then pcall(callback, val) end
             end
         end
@@ -1651,7 +1651,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         trackFrame.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                 dragging = true
-                updateSlider(input.Position.X, false)
+                updateSlider(input.Position.X, true)
             end
         end)
         
