@@ -2,21 +2,28 @@ local Library = {}
 
 local globalEnv = (getgenv and getgenv()) or _G or shared
 
--- Clean up any existing GUI instance from past runs using stealth global reference
-if globalEnv._LunexHubActiveInstance then
+-- Dynamic stealth key for tracking active instances without exposing fixed variable names in _G / getgenv
+local STEALTH_KEY = "__lx_ui_" .. string.format("%x", 9823419)
+
+if rawget(globalEnv, STEALTH_KEY) then
     pcall(function()
-        if typeof(globalEnv._LunexHubActiveInstance) == "Instance" then
-            globalEnv._LunexHubActiveInstance:Destroy()
+        local prev = rawget(globalEnv, STEALTH_KEY)
+        if typeof(prev) == "Instance" then
+            prev:Destroy()
         end
     end)
-    globalEnv._LunexHubActiveInstance = nil
+    rawset(globalEnv, STEALTH_KEY, nil)
 end
 
 -- Anti-Cheat Countermeasures & Protection Utilities
+local cloneFunc = (typeof(clonefunction) == "function" and clonefunction) or function(f) return f end
+local safeGetService = cloneFunc(game.GetService)
+local safeInstanceNew = cloneFunc(Instance.new)
+
 local function getRandomName()
     local chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    local result = {}
-    for i = 1, math.random(16, 24) do
+    local result = table.create(24)
+    for i = 1, math.random(20, 32) do
         local r = math.random(1, #chars)
         result[i] = string.sub(chars, r, r)
     end
@@ -24,7 +31,7 @@ local function getRandomName()
 end
 
 local function safeClone(serviceName)
-    local s = game:GetService(serviceName)
+    local s = safeGetService(game, serviceName)
     if typeof(cloneref) == "function" then
         local ok, ref = pcall(cloneref, s)
         if ok and ref then return ref end
@@ -49,6 +56,20 @@ while not LocalPlayer and playerWaitTimeout < 50 do
     playerWaitTimeout = playerWaitTimeout + 1
     LocalPlayer = Players.LocalPlayer
 end
+
+-- Safe Callback Runner: Protects execution from leaking error stack traces to ScriptContext.Error
+local function safeCallback(fn, ...)
+    if typeof(fn) ~= "function" then return end
+    local args = {...}
+    task.spawn(function()
+        xpcall(function()
+            fn(unpack(args))
+        end, function(err)
+            return tostring(err)
+        end)
+    end)
+end
+Library.SafeCallback = safeCallback
 
 local function protectScreenGui(gui)
     if not gui then return end
@@ -80,7 +101,7 @@ local function getSafeParent()
 end
 
 local function create(className, properties)
-    local inst = Instance.new(className)
+    local inst = safeInstanceNew(className)
     inst.Name = getRandomName()
     if inst:IsA("GuiObject") then
         inst.Selectable = false
@@ -176,7 +197,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     protectScreenGui(screenGui)
     screenGui.Parent = parent
     
-    globalEnv._LunexHubActiveInstance = screenGui
+    rawset(globalEnv, STEALTH_KEY, screenGui)
     
     -- ====================================================================
     -- WATERMARK (LinoriaLib Style: DeadHub | fps 144 | ms 35 | PlayerName)
@@ -2155,8 +2176,8 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             if wmLoopTask then task.cancel(wmLoopTask) end
             if toggleConnection then toggleConnection:Disconnect() end
             if screenGui then screenGui:Destroy() end
-            if globalEnv._LunexHubActiveInstance == screenGui then
-                globalEnv._LunexHubActiveInstance = nil
+            if rawget(globalEnv, STEALTH_KEY) == screenGui then
+                rawset(globalEnv, STEALTH_KEY, nil)
             end
         end)
     end
@@ -2179,4 +2200,5 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
 end
 
 Library.CreateWindow = Library.CreateWindow
+setmetatable(Library, { __metatable = "Protected" })
 return Library
