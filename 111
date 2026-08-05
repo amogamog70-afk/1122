@@ -217,6 +217,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         SecondaryAccentText = {},
         SecondaryAccentStrokes = {},
         DarkAccentBorderStrokes = {},
+        DarkAccentBorderFills = {},
         MainFrameBGFills = {},
         InnerFrameBGFills = {},
         GroupboxBGFills = {},
@@ -572,6 +573,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             ZIndex = 302,
             Parent = wrapper
         })
+        themeElements.MainFrameBGFills[notifFrame] = true
 
         local stroke = create("UIStroke", {
             Thickness = 1.2,
@@ -580,6 +582,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
             Parent = notifFrame
         })
+        themeElements.DarkAccentBorderStrokes[stroke] = true
 
         local notifTitleLbl = create("TextLabel", {
             Size = UDim2.new(1, -20, 0, 16),
@@ -594,6 +597,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             ZIndex = 303,
             Parent = notifFrame
         })
+        themeElements.SecondaryAccentText[notifTitleLbl] = true
 
         local notifBodyLbl = create("TextLabel", {
             Size = UDim2.new(1, -20, 0, 16),
@@ -608,6 +612,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             ZIndex = 303,
             Parent = notifFrame
         })
+        themeElements.TextActiveLabels[notifBodyLbl] = true
 
         local progressBar = create("Frame", {
             Size = UDim2.new(1, 0, 0, 2),
@@ -617,6 +622,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             ZIndex = 304,
             Parent = notifFrame
         })
+        themeElements.PrimaryAccentFills[progressBar] = true
 
         local slideIn = TweenService:Create(notifFrame, TweenInfo.new(0.38, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
             Position = UDim2.new(0, 0, 0, 0)
@@ -690,11 +696,12 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     
     local innerStroke = create("UIStroke", {
         Thickness = 1.0,
-        Color = theme.GroupboxBorder,
+        Color = theme.DarkAccentBorder,
         LineJoinMode = Enum.LineJoinMode.Miter,
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = innerFrame
     })
+    themeElements.DarkAccentBorderStrokes[innerStroke] = true
     
     local headerContainer = create("Frame", {
         Size = UDim2.new(1, -28, 0, 26),
@@ -763,20 +770,22 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     local tabsContainer = create("Frame", {
         Size = UDim2.new(1, -28, 0, 26),
         Position = UDim2.new(0, 14, 0, 38),
-        BackgroundColor3 = Color3.fromRGB(18, 16, 24),
+        BackgroundColor3 = theme.MainFrameBG,
         BackgroundTransparency = 0.45,
         BorderSizePixel = 0,
         Parent = innerFrame
     })
+    themeElements.MainFrameBGFills[tabsContainer] = true
     
     local tabsStroke = create("UIStroke", {
         Thickness = 1.0,
-        Color = theme.GroupboxBorder,
+        Color = theme.DarkAccentBorder,
         Transparency = 0.55,
         LineJoinMode = Enum.LineJoinMode.Miter,
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = tabsContainer
     })
+    themeElements.DarkAccentBorderStrokes[tabsStroke] = true
     
     local tabsLayout = create("UIListLayout", {
         FillDirection = Enum.FillDirection.Horizontal,
@@ -841,7 +850,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             Size = UDim2.new(0.31, 0, 1, 0),
             Position = UDim2.new(0.69, 0, 0, 0),
             BackgroundTransparency = 1,
-            Parent = tabFrame
+            Parent = rightCol
         })
         
         local rightLayout = create("UIListLayout", {
@@ -996,11 +1005,12 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             local sep = create("Frame", {
                 LayoutOrder = i * 2,
                 Size = UDim2.new(0, 1, 1, 0),
-                BackgroundColor3 = theme.GroupboxBorder,
+                BackgroundColor3 = theme.DarkAccentBorder,
                 BackgroundTransparency = 0.3,
                 BorderSizePixel = 0,
                 Parent = tabsContainer
             })
+            themeElements.DarkAccentBorderFills[sep] = true
         end
     end
     
@@ -1053,10 +1063,11 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         local dropLine = create("Frame", {
             Size = UDim2.new(0, 1, 1, 0),
             Position = (posScale == 1.0 and UDim2.new(1, -1, 0, 0) or UDim2.new(posScale, 0, 0, 0)),
-            BackgroundColor3 = Color3.fromRGB(24, 22, 32),
+            BackgroundColor3 = theme.DarkAccentBorder,
             BorderSizePixel = 0,
             Parent = dropLinesContainer
         })
+        themeElements.DarkAccentBorderFills[dropLine] = true
     end
     
     -- Dynamic Column Titles Mapping per Tab
@@ -1154,7 +1165,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         
         local groupStroke = create("UIStroke", {
             Thickness = 1.0,
-            Color = theme.GroupboxBorder,
+            Color = theme.DarkAccentBorder,
             LineJoinMode = Enum.LineJoinMode.Miter,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
             Parent = groupFrame
@@ -1406,6 +1417,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 local active = (isActiveOverride ~= nil) and isActiveOverride or state
                 if not currentKey or keyStr == "NONE" then
                     keybindBtn.Text = "[NONE]"
+                    keybindBtn.TextColor3 = theme.TextInactive
                     Window:UpdateKeybindInList(text or "Toggle", "NONE", currentMode, false)
                 elseif currentMode == "Always" then
                     keybindBtn.Text = "[ALWAYS]"
@@ -2510,12 +2522,24 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 for inst, _ in pairs(themeElements.DarkAccentBorderStrokes) do
                     if inst and inst.Parent then inst.Color = newColor end
                 end
+                for inst, _ in pairs(themeElements.DarkAccentBorderFills) do
+                    if inst and inst.Parent then inst.BackgroundColor3 = newColor end
+                end
             elseif propName == "MainFrameBG" then
                 for inst, _ in pairs(themeElements.MainFrameBGFills) do
                     if inst and inst.Parent then inst.BackgroundColor3 = newColor end
                 end
+                for inst, _ in pairs(themeElements.InnerFrameBGFills) do
+                    if inst and inst.Parent then inst.BackgroundColor3 = newColor end
+                end
+                for inst, _ in pairs(themeElements.GroupboxBGFills) do
+                    if inst and inst.Parent then inst.BackgroundColor3 = newColor end
+                end
             elseif propName == "InnerFrameBG" then
                 for inst, _ in pairs(themeElements.InnerFrameBGFills) do
+                    if inst and inst.Parent then inst.BackgroundColor3 = newColor end
+                end
+                for inst, _ in pairs(themeElements.GroupboxBGFills) do
                     if inst and inst.Parent then inst.BackgroundColor3 = newColor end
                 end
             elseif propName == "GroupboxBG" then
@@ -2538,6 +2562,44 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         end)
     end
     Window.SetThemeColor = Window.SetThemeColor
+
+    function Window:ApplyPresetTheme(presetName)
+        presetName = tostring(presetName):lower()
+        if presetName == "crimson" then
+            Window:SetThemeColor("PrimaryAccent", Color3.fromRGB(230, 45, 65))
+            Window:SetThemeColor("SecondaryAccent", Color3.fromRGB(255, 80, 100))
+            Window:SetThemeColor("DarkAccentBorder", Color3.fromRGB(180, 30, 45))
+            Window:SetThemeColor("MainFrameBG", Color3.fromRGB(14, 10, 12))
+            Window:SetThemeColor("LogoColor", Color3.fromRGB(255, 80, 100))
+        elseif presetName == "blue" then
+            Window:SetThemeColor("PrimaryAccent", Color3.fromRGB(40, 120, 240))
+            Window:SetThemeColor("SecondaryAccent", Color3.fromRGB(80, 160, 255))
+            Window:SetThemeColor("DarkAccentBorder", Color3.fromRGB(25, 85, 180))
+            Window:SetThemeColor("MainFrameBG", Color3.fromRGB(10, 14, 20))
+            Window:SetThemeColor("LogoColor", Color3.fromRGB(80, 160, 255))
+        elseif presetName == "emerald" then
+            Window:SetThemeColor("PrimaryAccent", Color3.fromRGB(35, 200, 110))
+            Window:SetThemeColor("SecondaryAccent", Color3.fromRGB(70, 235, 145))
+            Window:SetThemeColor("DarkAccentBorder", Color3.fromRGB(20, 145, 75))
+            Window:SetThemeColor("MainFrameBG", Color3.fromRGB(8, 14, 10))
+            Window:SetThemeColor("LogoColor", Color3.fromRGB(70, 235, 145))
+        elseif presetName == "monochrome" then
+            Window:SetThemeColor("PrimaryAccent", Color3.fromRGB(220, 220, 230))
+            Window:SetThemeColor("SecondaryAccent", Color3.fromRGB(255, 255, 255))
+            Window:SetThemeColor("DarkAccentBorder", Color3.fromRGB(140, 140, 150))
+            Window:SetThemeColor("MainFrameBG", Color3.fromRGB(18, 18, 22))
+            Window:SetThemeColor("LogoColor", Color3.fromRGB(255, 255, 255))
+        else
+            -- Default Purple Void
+            Window:SetThemeColor("PrimaryAccent", Color3.fromRGB(150, 75, 230))
+            Window:SetThemeColor("SecondaryAccent", Color3.fromRGB(180, 105, 255))
+            Window:SetThemeColor("DarkAccentBorder", Color3.fromRGB(130, 50, 200))
+            Window:SetThemeColor("MainFrameBG", Color3.fromRGB(10, 10, 14))
+            Window:SetThemeColor("TextActive", Color3.fromRGB(245, 242, 255))
+            Window:SetThemeColor("TextInactive", Color3.fromRGB(145, 140, 160))
+            Window:SetThemeColor("LogoColor", Color3.fromRGB(255, 255, 255))
+        end
+    end
 
     -- Toggle Window Visibility with Keybind (RightShift)
     local toggleConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -2582,6 +2644,18 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             -- 2. Center Column: Theme Customizer
             local themeGroup = settingsTabObj:AddGroupbox("center", "Theme Customizer")
             
+            themeGroup:AddDoubleButton("Purple Theme", function()
+                Window:ApplyPresetTheme("purple")
+            end, "Crimson Theme", function()
+                Window:ApplyPresetTheme("crimson")
+            end)
+
+            themeGroup:AddDoubleButton("Blue Theme", function()
+                Window:ApplyPresetTheme("blue")
+            end, "Emerald Theme", function()
+                Window:ApplyPresetTheme("emerald")
+            end)
+
             local accPicker = themeGroup:AddLabel("Accent Color")
             accPicker:AddColorPicker(theme.PrimaryAccent, function(col)
                 Window:SetThemeColor("PrimaryAccent", col)
@@ -2631,14 +2705,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Window:Notify("Lunex Hub", "Config loaded: " .. tostring(cfgInput.GetText() or "default"), 3.5)
             end)
             configGroup:AddButton("Reset Theme", function()
-                Window:SetThemeColor("PrimaryAccent", Color3.fromRGB(150, 75, 230))
-                Window:SetThemeColor("SecondaryAccent", Color3.fromRGB(180, 105, 255))
-                Window:SetThemeColor("DarkAccentBorder", Color3.fromRGB(130, 50, 200))
-                Window:SetThemeColor("MainFrameBG", Color3.fromRGB(10, 10, 14))
-                Window:SetThemeColor("InnerFrameBG", Color3.fromRGB(14, 14, 19))
-                Window:SetThemeColor("TextActive", Color3.fromRGB(245, 242, 255))
-                Window:SetThemeColor("TextInactive", Color3.fromRGB(145, 140, 160))
-                Window:SetThemeColor("LogoColor", Color3.fromRGB(255, 255, 255))
+                Window:ApplyPresetTheme("purple")
                 Window:Notify("Lunex Hub", "Theme reset to default purple", 3.0)
             end)
         end
