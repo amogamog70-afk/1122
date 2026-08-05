@@ -1474,7 +1474,15 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = modePopup
             })
             
+            local modeButtons = {}
             local modes = {"Always", "Toggle", "Hold"}
+
+            local function refreshModeButtons()
+                for modeName, btn in pairs(modeButtons) do
+                    btn.TextColor3 = (modeName == currentMode) and theme.TextActive or theme.TextInactive
+                end
+            end
+
             for idx, modeName in ipairs(modes) do
                 local mBtn = create("TextButton", {
                     Size = UDim2.new(1, 0, 0, 16),
@@ -1486,9 +1494,11 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     ZIndex = 2001,
                     Parent = modePopup
                 })
+                modeButtons[modeName] = mBtn
                 
                 mBtn.MouseButton1Click:Connect(function()
                     currentMode = modeName
+                    refreshModeButtons()
                     updateKeybindDisplay(state)
                     modePopup.Visible = false
                 end)
@@ -1535,6 +1545,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             end)
             
             keybindBtn.MouseButton2Click:Connect(function()
+                refreshModeButtons()
                 modePopup.Visible = not modePopup.Visible
                 if modePopup.Visible then
                     local absPos = keybindBtn.AbsolutePosition
@@ -1592,7 +1603,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             local keybindObj = {
                 SetKey = function(newKey) currentKey = newKey; updateKeybindDisplay() end,
                 GetKey = function() return currentKey end,
-                SetMode = function(newMode) currentMode = newMode; updateKeybindDisplay() end,
+                SetMode = function(newMode) currentMode = newMode; refreshModeButtons(); updateKeybindDisplay() end,
                 GetMode = function() return currentMode end
             }
 
