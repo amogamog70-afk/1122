@@ -384,11 +384,11 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     -- KEYBIND LIST (LinoriaLib Style: Small Draggable Box with Header & Line)
     -- ====================================================================
     local keybindFrame = create("Frame", {
-        Size = UDim2.new(0, 210, 0, 0),
+        Size = UDim2.new(0, 0, 0, 0),
         Position = UDim2.new(0, 16, 0, 46),
         BackgroundColor3 = theme.MainFrameBG,
         BorderSizePixel = 0,
-        AutomaticSize = Enum.AutomaticSize.Y,
+        AutomaticSize = Enum.AutomaticSize.XY,
         ZIndex = 100,
         Parent = screenGui
     })
@@ -474,13 +474,23 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 local row = create("Frame", {
                     Size = UDim2.new(1, 0, 0, 18),
                     BackgroundTransparency = 1,
+                    AutomaticSize = Enum.AutomaticSize.X,
                     ZIndex = 101,
                     Parent = keybindContainer
                 })
 
+                local rowLayout = create("UIListLayout", {
+                    FillDirection = Enum.FillDirection.Horizontal,
+                    HorizontalAlignment = Enum.HorizontalAlignment.Left,
+                    VerticalAlignment = Enum.VerticalAlignment.Center,
+                    SortOrder = Enum.SortOrder.LayoutOrder,
+                    Padding = UDim.new(0, 10),
+                    Parent = row
+                })
+
                 local nameLbl = create("TextLabel", {
-                    Size = UDim2.new(0.55, 0, 1, 0),
-                    Position = UDim2.new(0, 0, 0, 0),
+                    Size = UDim2.new(0, 0, 1, 0),
+                    AutomaticSize = Enum.AutomaticSize.X,
                     BackgroundTransparency = 1,
                     Font = Enum.Font.Code,
                     TextSize = 12,
@@ -492,13 +502,13 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 })
 
                 local valLbl = create("TextLabel", {
-                    Size = UDim2.new(0.45, 0, 1, 0),
-                    Position = UDim2.new(0.55, 0, 0, 0),
+                    Size = UDim2.new(0, 0, 1, 0),
+                    AutomaticSize = Enum.AutomaticSize.X,
                     BackgroundTransparency = 1,
                     Font = Enum.Font.Code,
                     TextSize = 12,
                     TextColor3 = valColor,
-                    TextXAlignment = Enum.TextXAlignment.Right,
+                    TextXAlignment = Enum.TextXAlignment.Left,
                     Text = displayText,
                     ZIndex = 102,
                     Parent = row
@@ -2104,14 +2114,17 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         
         local dropdownObj = {
             SetSelected = function(val)
-                selected = val
-                btnText.Text = tostring(selected)
+                if typeof(val) == "table" then
+                    val = val[1] or ""
+                end
+                selected = tostring(val or "")
+                btnText.Text = selected
                 rebuildOptions()
                 if callback then pcall(callback, selected) end
             end,
             GetSelected = function() return selected end,
             SetOptions = function(newOpts)
-                options = newOpts or {}
+                options = (type(newOpts) == "table" and newOpts) or {}
                 if not table.find(options, selected) then
                     selected = options[1] or ""
                     btnText.Text = tostring(selected)
@@ -2907,28 +2920,32 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     local item = registry[flagName]
                     if item then
                         pcall(function()
-                            if item.Type == "Toggle" then
+                            if item.Type == "Toggle" and typeof(val) == "boolean" then
                                 item.Object:SetState(val)
-                            elseif item.Type == "Slider" then
+                            elseif item.Type == "Slider" and typeof(val) == "number" then
                                 item.Object:SetValue(val)
                             elseif item.Type == "Dropdown" then
-                                item.Object:SetSelected(val)
-                            elseif item.Type == "MultiDropdown" then
-                                if type(val) == "table" then
-                                    for opt, st in pairs(val) do
-                                        item.Object:SetOption(opt, st)
-                                    end
+                                local strVal = (type(val) == "table" and val[1]) or val
+                                item.Object:SetSelected(tostring(strVal or ""))
+                            elseif item.Type == "MultiDropdown" and type(val) == "table" then
+                                for opt, st in pairs(val) do
+                                    item.Object:SetOption(opt, st)
                                 end
                             elseif item.Type == "Keybind" and type(val) == "table" then
                                 if val.Key then
                                     local enumKey = Enum.KeyCode[val.Key] or Enum.UserInputType[val.Key]
                                     item.Object:SetKey(enumKey or val.Key)
+                                else
+                                    item.Object:SetKey(nil)
                                 end
                                 if val.Mode then
                                     item.Object:SetMode(val.Mode)
                                 end
                             elseif item.Type == "ColorPicker" and type(val) == "string" then
-                                item.Object:SetColor(Color3.fromHex(val))
+                                local ok, col = pcall(Color3.fromHex, val)
+                                if ok and col then
+                                    item.Object:SetColor(col)
+                                end
                             end
                         end)
                     end
