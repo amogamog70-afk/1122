@@ -701,12 +701,11 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     
     local innerStroke = create("UIStroke", {
         Thickness = 1.0,
-        Color = theme.DarkAccentBorder,
+        Color = theme.GroupboxBorder,
         LineJoinMode = Enum.LineJoinMode.Miter,
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = innerFrame
     })
-    themeElements.DarkAccentBorderStrokes[innerStroke] = true
     
     local headerContainer = create("Frame", {
         Size = UDim2.new(1, -28, 0, 26),
@@ -784,13 +783,12 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     
     local tabsStroke = create("UIStroke", {
         Thickness = 1.0,
-        Color = theme.DarkAccentBorder,
+        Color = theme.GroupboxBorder,
         Transparency = 0.55,
         LineJoinMode = Enum.LineJoinMode.Miter,
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = tabsContainer
     })
-    themeElements.DarkAccentBorderStrokes[tabsStroke] = true
     
     local tabsLayout = create("UIListLayout", {
         FillDirection = Enum.FillDirection.Horizontal,
@@ -1010,12 +1008,11 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             local sep = create("Frame", {
                 LayoutOrder = i * 2,
                 Size = UDim2.new(0, 1, 1, 0),
-                BackgroundColor3 = theme.DarkAccentBorder,
+                BackgroundColor3 = theme.GroupboxBorder,
                 BackgroundTransparency = 0.3,
                 BorderSizePixel = 0,
                 Parent = tabsContainer
             })
-            themeElements.DarkAccentBorderFills[sep] = true
         end
     end
     
@@ -1068,11 +1065,10 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         local dropLine = create("Frame", {
             Size = UDim2.new(0, 1, 1, 0),
             Position = (posScale == 1.0 and UDim2.new(1, -1, 0, 0) or UDim2.new(posScale, 0, 0, 0)),
-            BackgroundColor3 = theme.DarkAccentBorder,
+            BackgroundColor3 = Color3.fromRGB(24, 22, 32),
             BorderSizePixel = 0,
             Parent = dropLinesContainer
         })
-        themeElements.DarkAccentBorderFills[dropLine] = true
     end
     
     -- Dynamic Column Titles Mapping per Tab
@@ -2902,18 +2898,6 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
 
             -- 2. Center Column: Theme Customizer
             local themeGroup = settingsTabObj:AddGroupbox("center", "Theme Customizer")
-            
-            themeGroup:AddDoubleButton("Purple Theme", function()
-                Window:ApplyPresetTheme("purple")
-            end, "Crimson Theme", function()
-                Window:ApplyPresetTheme("crimson")
-            end)
-
-            themeGroup:AddDoubleButton("Blue Theme", function()
-                Window:ApplyPresetTheme("blue")
-            end, "Emerald Theme", function()
-                Window:ApplyPresetTheme("emerald")
-            end)
 
             local accPicker = themeGroup:AddLabel("Accent Color")
             accPicker:AddColorPicker(theme.PrimaryAccent, function(col)
