@@ -28,6 +28,7 @@ local Players = safeClone("Players")
 local UserInputService = safeClone("UserInputService")
 local TweenService = safeClone("TweenService")
 local RunService = safeClone("RunService")
+local HttpService = safeClone("HttpService")
 
 local CoreGui = nil
 pcall(function()
@@ -227,6 +228,10 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     }
     Window.ThemeElements = themeElements
     Window.Theme = theme
+
+    -- Global Config State Registry (Flag System)
+    local registry = {}
+    Window.Registry = registry
 
     -- Main ScreenGui with randomized stealth name, realistic DisplayOrder, and executor protection
     local screenGui = create("ScreenGui", {
@@ -850,7 +855,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             Size = UDim2.new(0.31, 0, 1, 0),
             Position = UDim2.new(0.69, 0, 0, 0),
             BackgroundTransparency = 1,
-            Parent = rightCol
+            Parent = tabFrame
         })
         
         local rightLayout = create("UIListLayout", {
@@ -1357,6 +1362,10 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         toggleObj.SetState = updateToggle
         toggleObj.GetState = function() return state end
         
+        if text then
+            registry[text] = { Type = "Toggle", Object = toggleObj }
+        end
+        
         local keybindBtnRef = nil
         local pickerBtnRef = nil
         
@@ -1566,10 +1575,18 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 end
             end)
             
-            return {
+            local keybindObj = {
                 SetKey = function(newKey) currentKey = newKey; updateKeybindDisplay() end,
-                GetKey = function() return currentKey end
+                GetKey = function() return currentKey end,
+                SetMode = function(newMode) currentMode = newMode; updateKeybindDisplay() end,
+                GetMode = function() return currentMode end
             }
+
+            if text then
+                registry[text .. "_Keybind"] = { Type = "Keybind", Object = keybindObj }
+            end
+            
+            return keybindObj
         end
         
         function toggleObj:AddColorPicker(defaultColor, colorCallback)
@@ -1729,10 +1746,16 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 end)
             end)
             
-            return {
+            local pickerObj = {
                 SetColor = updateColor,
                 GetColor = function() return currentColor end
             }
+
+            if text then
+                registry[text .. "_Color"] = { Type = "ColorPicker", Object = pickerObj }
+            end
+
+            return pickerObj
         end
         
         return toggleObj
@@ -1868,7 +1891,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             end
         end)
         
-        return {
+        local sliderObj = {
             SetValue = function(val)
                 currentValue = math.clamp(val, min, max)
                 local pct = (currentValue - min) / math.max(1, max - min)
@@ -1878,6 +1901,12 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             end,
             GetValue = function() return currentValue end
         }
+
+        if text then
+            registry[text] = { Type = "Slider", Object = sliderObj }
+        end
+
+        return sliderObj
     end
 
     -- Method: Window:AddDropdown(columnParent, text, options, defaultSelected, callback)
@@ -1981,26 +2010,32 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             Parent = optionsContainer
         })
         
-        for idx, opt in ipairs(options) do
-            local optBtn = create("TextButton", {
-                Size = UDim2.new(1, 0, 0, 18),
-                BackgroundTransparency = 1,
-                Font = Enum.Font.Code,
-                TextSize = 11,
-                TextColor3 = (opt == selected) and theme.TextActive or theme.TextInactive,
-                Text = tostring(opt),
-                TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 151,
-                Parent = optionsContainer
-            })
-            
-            optBtn.MouseButton1Click:Connect(function()
-                selected = opt
-                btnText.Text = tostring(selected)
-                optionsContainer.Visible = false
-                if callback then pcall(callback, selected) end
-            end)
+        local function rebuildOptions()
+            for _, child in ipairs(optionsContainer:GetChildren()) do
+                if child:IsA("TextButton") then child:Destroy() end
+            end
+            for idx, opt in ipairs(options) do
+                local optBtn = create("TextButton", {
+                    Size = UDim2.new(1, 0, 0, 18),
+                    BackgroundTransparency = 1,
+                    Font = Enum.Font.Code,
+                    TextSize = 11,
+                    TextColor3 = (opt == selected) and theme.TextActive or theme.TextInactive,
+                    Text = tostring(opt),
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    ZIndex = 151,
+                    Parent = optionsContainer
+                })
+                
+                optBtn.MouseButton1Click:Connect(function()
+                    selected = opt
+                    btnText.Text = tostring(selected)
+                    optionsContainer.Visible = false
+                    if callback then pcall(callback, selected) end
+                end)
+            end
         end
+        rebuildOptions()
         
         mainBtn.MouseButton1Click:Connect(function()
             local totalH = (#options * 20) + 8
@@ -2008,14 +2043,28 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             optionsContainer.Visible = not optionsContainer.Visible
         end)
         
-        return {
+        local dropdownObj = {
             SetSelected = function(val)
                 selected = val
                 btnText.Text = tostring(selected)
                 if callback then pcall(callback, selected) end
             end,
-            GetSelected = function() return selected end
+            GetSelected = function() return selected end,
+            SetOptions = function(newOpts)
+                options = newOpts or {}
+                rebuildOptions()
+                if not table.find(options, selected) then
+                    selected = options[1] or ""
+                    btnText.Text = tostring(selected)
+                end
+            end
         }
+
+        if text then
+            registry[text] = { Type = "Dropdown", Object = dropdownObj }
+        end
+
+        return dropdownObj
     end
 
     -- Method: Window:AddMultiDropdown(columnParent, text, options, defaultSelectedMap, callback)
@@ -2145,9 +2194,20 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             optionsContainer.Visible = not optionsContainer.Visible
         end)
         
-        return {
-            GetSelectedMap = function() return selectedMap end
+        local multiDropdownObj = {
+            GetSelectedMap = function() return selectedMap end,
+            SetOption = function(opt, st)
+                selectedMap[opt] = st
+                btnText.Text = getSelectedString()
+                if callback then pcall(callback, selectedMap) end
+            end
         }
+
+        if text then
+            registry[text] = { Type = "MultiDropdown", Object = multiDropdownObj }
+        end
+
+        return multiDropdownObj
     end
 
     -- Method: Window:AddInput(columnParent, text, placeholder, defaultVal, callback)
@@ -2487,10 +2547,16 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 end)
             end)
             
-            return {
+            local pickerObj = {
                 SetColor = updateColor,
                 GetColor = function() return currentColor end
             }
+
+            if text then
+                registry[text .. "_Color"] = { Type = "ColorPicker", Object = pickerObj }
+            end
+
+            return pickerObj
         end
         
         return labelObj
@@ -2601,6 +2667,199 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         end
     end
 
+    -- ====================================================================
+    -- FULL JSON CONFIG FILE SYSTEM (Executor writefile/readfile/listfiles)
+    -- ====================================================================
+    local CONFIG_FOLDER = "LunexHub"
+    local CONFIG_PATH = "LunexHub/Configs"
+
+    local function ensureConfigFolder()
+        pcall(function()
+            if typeof(makefolder) == "function" and typeof(isfolder) == "function" then
+                if not isfolder(CONFIG_FOLDER) then makefolder(CONFIG_FOLDER) end
+                if not isfolder(CONFIG_PATH) then makefolder(CONFIG_PATH) end
+            end
+        end)
+    end
+
+    local function getSavedConfigs()
+        ensureConfigFolder()
+        local configs = {}
+        pcall(function()
+            if typeof(listfiles) == "function" and typeof(isfolder) == "function" then
+                if isfolder(CONFIG_PATH) then
+                    local files = listfiles(CONFIG_PATH)
+                    for _, filePath in ipairs(files) do
+                        local fileName = filePath:match("([^/\\]+)%.json$")
+                        if fileName then
+                            table.insert(configs, fileName)
+                        end
+                    end
+                end
+            end
+        end)
+        if #configs == 0 then
+            table.insert(configs, "default")
+        end
+        table.sort(configs)
+        return configs
+    end
+
+    function Window:SaveConfig(cfgName)
+        ensureConfigFolder()
+        if not cfgName or cfgName == "" then cfgName = "default" end
+        cfgName = cfgName:gsub("[^%w_%-]", "")
+        
+        local data = {
+            Theme = {
+                PrimaryAccent = theme.PrimaryAccent:ToHex(),
+                SecondaryAccent = theme.SecondaryAccent:ToHex(),
+                DarkAccentBorder = theme.DarkAccentBorder:ToHex(),
+                MainFrameBG = theme.MainFrameBG:ToHex(),
+                TextActive = theme.TextActive:ToHex(),
+                TextInactive = theme.TextInactive:ToHex(),
+                LogoColor = theme.LogoColor:ToHex(),
+            },
+            UI = {
+                WatermarkVisible = wmVisible,
+                KeybindListVisible = keybindFrame.Visible
+            },
+            Flags = {}
+        }
+
+        for flagName, item in pairs(registry) do
+            pcall(function()
+                if item.Type == "Toggle" then
+                    data.Flags[flagName] = item.Object:GetState()
+                elseif item.Type == "Slider" then
+                    data.Flags[flagName] = item.Object:GetValue()
+                elseif item.Type == "Dropdown" then
+                    data.Flags[flagName] = item.Object:GetSelected()
+                elseif item.Type == "MultiDropdown" then
+                    data.Flags[flagName] = item.Object:GetSelectedMap()
+                elseif item.Type == "Keybind" then
+                    local key = item.Object:GetKey()
+                    data.Flags[flagName] = {
+                        Key = key and (typeof(key) == "EnumItem" and key.Name or tostring(key)) or nil,
+                        Mode = item.Object:GetMode()
+                    }
+                elseif item.Type == "ColorPicker" then
+                    local col = item.Object:GetColor()
+                    data.Flags[flagName] = col and col:ToHex() or nil
+                end
+            end)
+        end
+
+        local okStr, jsonStr = pcall(function() return HttpService:JSONEncode(data) end)
+        if not okStr or not jsonStr then
+            Window:Notify("Lunex Hub", "Failed to encode JSON for " .. cfgName, 3.5)
+            return
+        end
+
+        local fullPath = CONFIG_PATH .. "/" .. cfgName .. ".json"
+        
+        if typeof(writefile) == "function" then
+            pcall(writefile, fullPath, jsonStr)
+            Window:Notify("Lunex Hub", "Config saved: " .. cfgName .. ".json", 3.5)
+        else
+            Window:Notify("Lunex Hub", "Executor does not support writefile!", 3.5)
+        end
+    end
+
+    function Window:LoadConfig(cfgName)
+        ensureConfigFolder()
+        if not cfgName or cfgName == "" then cfgName = "default" end
+        cfgName = cfgName:gsub("[^%w_%-]", "")
+        local fullPath = CONFIG_PATH .. "/" .. cfgName .. ".json"
+        
+        if typeof(readfile) ~= "function" then
+            Window:Notify("Lunex Hub", "Executor does not support readfile!", 3.5)
+            return
+        end
+
+        local success, content = pcall(readfile, fullPath)
+        if not success or not content or #content == 0 then
+            Window:Notify("Lunex Hub", "Failed to read " .. cfgName .. ".json", 3.5)
+            return
+        end
+
+        local ok, data = pcall(function() return HttpService:JSONDecode(content) end)
+        if not ok or not data then
+            Window:Notify("Lunex Hub", "Corrupted JSON in " .. cfgName .. ".json", 3.5)
+            return
+        end
+
+        pcall(function()
+            -- 1. Restore Theme
+            if data.Theme then
+                if data.Theme.PrimaryAccent then Window:SetThemeColor("PrimaryAccent", Color3.fromHex(data.Theme.PrimaryAccent)) end
+                if data.Theme.SecondaryAccent then Window:SetThemeColor("SecondaryAccent", Color3.fromHex(data.Theme.SecondaryAccent)) end
+                if data.Theme.DarkAccentBorder then Window:SetThemeColor("DarkAccentBorder", Color3.fromHex(data.Theme.DarkAccentBorder)) end
+                if data.Theme.MainFrameBG then Window:SetThemeColor("MainFrameBG", Color3.fromHex(data.Theme.MainFrameBG)) end
+                if data.Theme.TextActive then Window:SetThemeColor("TextActive", Color3.fromHex(data.Theme.TextActive)) end
+                if data.Theme.TextInactive then Window:SetThemeColor("TextInactive", Color3.fromHex(data.Theme.TextInactive)) end
+                if data.Theme.LogoColor then Window:SetThemeColor("LogoColor", Color3.fromHex(data.Theme.LogoColor)) end
+            end
+
+            -- 2. Restore UI Visibility
+            if data.UI then
+                if data.UI.WatermarkVisible ~= nil then Window:SetWatermarkVisibility(data.UI.WatermarkVisible) end
+                if data.UI.KeybindListVisible ~= nil then Window:SetKeybindListVisibility(data.UI.KeybindListVisible) end
+            end
+
+            -- 3. Restore Flags
+            if data.Flags then
+                for flagName, val in pairs(data.Flags) do
+                    local item = registry[flagName]
+                    if item then
+                        pcall(function()
+                            if item.Type == "Toggle" then
+                                item.Object:SetState(val)
+                            elseif item.Type == "Slider" then
+                                item.Object:SetValue(val)
+                            elseif item.Type == "Dropdown" then
+                                item.Object:SetSelected(val)
+                            elseif item.Type == "MultiDropdown" then
+                                if type(val) == "table" then
+                                    for opt, st in pairs(val) do
+                                        item.Object:SetOption(opt, st)
+                                    end
+                                end
+                            elseif item.Type == "Keybind" and type(val) == "table" then
+                                if val.Key then
+                                    local enumKey = Enum.KeyCode[val.Key] or Enum.UserInputType[val.Key]
+                                    item.Object:SetKey(enumKey or val.Key)
+                                end
+                                if val.Mode then
+                                    item.Object:SetMode(val.Mode)
+                                end
+                            elseif item.Type == "ColorPicker" and type(val) == "string" then
+                                item.Object:SetColor(Color3.fromHex(val))
+                            end
+                        end)
+                    end
+                end
+            end
+        end)
+
+        Window:Notify("Lunex Hub", "Loaded config: " .. cfgName .. ".json", 3.5)
+    end
+
+    function Window:DeleteConfig(cfgName)
+        ensureConfigFolder()
+        if not cfgName or cfgName == "" then return end
+        cfgName = cfgName:gsub("[^%w_%-]", "")
+        local fullPath = CONFIG_PATH .. "/" .. cfgName .. ".json"
+        if typeof(delfile) == "function" then
+            pcall(delfile, fullPath)
+            Window:Notify("Lunex Hub", "Deleted config: " .. cfgName .. ".json", 3.5)
+        end
+    end
+
+    function Window:GetSavedConfigs()
+        return getSavedConfigs()
+    end
+
     -- Toggle Window Visibility with Keybind (RightShift)
     local toggleConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
@@ -2699,11 +2958,34 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             -- 3. Right Column: Config
             local configGroup = settingsTabObj:AddGroupbox("right", "Config")
             local cfgInput = configGroup:AddInput("Config Name", "default", "default", function(val) end)
+            
+            local initialConfigs = getSavedConfigs()
+            local cfgDropdown = configGroup:AddDropdown("Select Config", initialConfigs, initialConfigs[1] or "default", function(val) end)
+
             configGroup:AddDoubleButton("Save Config", function()
-                Window:Notify("Lunex Hub", "Config saved: " .. tostring(cfgInput.GetText() or "default"), 3.5)
+                local name = cfgInput.GetText() or "default"
+                Window:SaveConfig(name)
+                local updatedList = getSavedConfigs()
+                cfgDropdown:SetOptions(updatedList)
+                cfgDropdown:SetSelected(name)
             end, "Load Config", function()
-                Window:Notify("Lunex Hub", "Config loaded: " .. tostring(cfgInput.GetText() or "default"), 3.5)
+                local name = cfgDropdown:GetSelected() or cfgInput.GetText() or "default"
+                Window:LoadConfig(name)
             end)
+
+            configGroup:AddDoubleButton("Delete Config", function()
+                local name = cfgDropdown:GetSelected()
+                if name and name ~= "" then
+                    Window:DeleteConfig(name)
+                    local updatedList = getSavedConfigs()
+                    cfgDropdown:SetOptions(updatedList)
+                end
+            end, "Refresh List", function()
+                local updatedList = getSavedConfigs()
+                cfgDropdown:SetOptions(updatedList)
+                Window:Notify("Lunex Hub", "Refreshed configs list", 2.5)
+            end)
+
             configGroup:AddButton("Reset Theme", function()
                 Window:ApplyPresetTheme("purple")
                 Window:Notify("Lunex Hub", "Theme reset to default purple", 3.0)
@@ -2723,6 +3005,10 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     Window.KeybindListFrame = keybindFrame
     Window.SetKeybindListVisibility = Window.SetKeybindListVisibility
     Window.UpdateKeybindInList = Window.UpdateKeybindInList
+    Window.SaveConfig = Window.SaveConfig
+    Window.LoadConfig = Window.LoadConfig
+    Window.DeleteConfig = Window.DeleteConfig
+    Window.GetSavedConfigs = Window.GetSavedConfigs
     
     return Window
 end
