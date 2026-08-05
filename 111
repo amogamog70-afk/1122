@@ -236,7 +236,8 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     -- Main ScreenGui with randomized stealth name, realistic DisplayOrder, and executor protection
     local screenGui = create("ScreenGui", {
         ResetOnSpawn = false,
-        DisplayOrder = math.random(12, 28)
+        DisplayOrder = math.random(12, 28),
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     })
     protectScreenGui(screenGui)
     screenGui.Parent = parent
@@ -1634,7 +1635,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Size = UDim2.new(1, -12, 0, 108),
                 Position = UDim2.new(0, 6, 0, 6),
                 BackgroundTransparency = 1,
-                ZIndex = 201,
+                ZIndex = 2001,
                 Parent = pickerPopup
             })
 
@@ -1673,7 +1674,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     AutoButtonColor = false,
                     BackgroundColor3 = colorVal,
                     BorderSizePixel = 0,
-                    ZIndex = 202,
+                    ZIndex = 2002,
                     Parent = gridContainer
                 })
 
@@ -1701,7 +1702,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Text = "#" .. currentColor:ToHex():upper(),
                 PlaceholderText = "#HEXCode",
                 TextXAlignment = Enum.TextXAlignment.Center,
-                ZIndex = 202,
+                ZIndex = 2002,
                 Parent = pickerPopup
             })
 
@@ -2539,7 +2540,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Size = UDim2.new(1, -12, 0, 108),
                 Position = UDim2.new(0, 6, 0, 6),
                 BackgroundTransparency = 1,
-                ZIndex = 201,
+                ZIndex = 2001,
                 Parent = pickerPopup
             })
 
@@ -2578,7 +2579,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     AutoButtonColor = false,
                     BackgroundColor3 = colorVal,
                     BorderSizePixel = 0,
-                    ZIndex = 202,
+                    ZIndex = 2002,
                     Parent = gridContainer
                 })
 
@@ -2606,7 +2607,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Text = "#" .. currentColor:ToHex():upper(),
                 PlaceholderText = "#HEXCode",
                 TextXAlignment = Enum.TextXAlignment.Center,
-                ZIndex = 202,
+                ZIndex = 2002,
                 Parent = pickerPopup
             })
 
@@ -3033,38 +3034,194 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
 
             -- 3. Right Column: Config
             local configGroup = settingsTabObj:AddGroupbox("right", "Config")
-            local cfgInput = configGroup:AddInput("Config Name", "default", "default", function(val) end)
-            
-            local initialConfigs = getSavedConfigs()
-            local cfgDropdown = configGroup:AddDropdown("Select Config", initialConfigs, initialConfigs[1] or "default", function(val) end)
 
-            configGroup:AddDoubleButton("Save Config", function()
-                local name = cfgInput.GetText() or "default"
+            local configFrame = create("Frame", {
+                Size = UDim2.new(1, 0, 0, 44),
+                BackgroundTransparency = 1,
+                Parent = configGroup.Container
+            })
+
+            local configLabel = create("TextLabel", {
+                Size = UDim2.new(1, -20, 0, 16),
+                Position = UDim2.new(0, 10, 0, 0),
+                BackgroundTransparency = 1,
+                Text = "Config Name",
+                Font = Enum.Font.Code,
+                TextSize = 13,
+                TextColor3 = theme.TextActive,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = configFrame
+            })
+            themeElements.TextActiveLabels[configLabel] = true
+
+            local cfgBoxContainer = create("Frame", {
+                Size = UDim2.new(1, -20, 0, 22),
+                Position = UDim2.new(0, 10, 0, 18),
+                BackgroundColor3 = theme.ControlBG,
+                BorderSizePixel = 0,
+                Parent = configFrame
+            })
+
+            create("UIStroke", {
+                Thickness = 1.0,
+                Color = theme.ControlBorder,
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                Parent = cfgBoxContainer
+            })
+
+            local cfgTextBox = create("TextBox", {
+                Size = UDim2.new(1, -24, 1, 0),
+                Position = UDim2.new(0, 8, 0, 0),
+                BackgroundTransparency = 1,
+                Font = Enum.Font.Code,
+                TextSize = 12,
+                TextColor3 = theme.TextActive,
+                Text = "default",
+                PlaceholderText = "Config Name...",
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ClearTextOnFocus = false,
+                Parent = cfgBoxContainer
+            })
+            themeElements.TextActiveLabels[cfgTextBox] = true
+
+            local cfgArrowBtn = create("TextButton", {
+                Size = UDim2.new(0, 20, 1, 0),
+                Position = UDim2.new(1, -20, 0, 0),
+                BackgroundTransparency = 1,
+                Font = Enum.Font.Code,
+                TextSize = 11,
+                TextColor3 = theme.TextInactive,
+                Text = "v",
+                Parent = cfgBoxContainer
+            })
+
+            local cfgDropdownContainer = create("ScrollingFrame", {
+                Size = UDim2.new(0, 180, 0, 0),
+                Position = UDim2.new(0, 0, 0, 0),
+                BackgroundColor3 = theme.MainFrameBG,
+                BorderSizePixel = 0,
+                Visible = false,
+                ClipsDescendants = true,
+                ScrollBarThickness = 3,
+                ScrollBarImageColor3 = theme.PrimaryAccent,
+                CanvasSize = UDim2.new(0, 0, 0, 0),
+                ZIndex = 2000,
+                Parent = screenGui
+            })
+            themeElements.MainFrameBGFills[cfgDropdownContainer] = true
+            themeElements.PrimaryAccentFills[cfgDropdownContainer] = true
+
+            create("UIStroke", {
+                Thickness = 1.0,
+                Color = theme.DarkAccentBorder,
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                Parent = cfgDropdownContainer
+            })
+
+            create("UIListLayout", {
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Padding = UDim.new(0, 2),
+                Parent = cfgDropdownContainer
+            })
+
+            create("UIPadding", {
+                PaddingTop = UDim.new(0, 4),
+                PaddingBottom = UDim.new(0, 4),
+                PaddingLeft = UDim.new(0, 4),
+                PaddingRight = UDim.new(0, 4),
+                Parent = cfgDropdownContainer
+            })
+
+            local function refreshConfigList()
+                pcall(function()
+                    for _, child in ipairs(cfgDropdownContainer:GetChildren()) do
+                        if child:IsA("TextButton") then child:Destroy() end
+                    end
+                    local fileList = getSavedConfigs()
+                    local totalH = (#fileList * 20) + 8
+                    cfgDropdownContainer.CanvasSize = UDim2.new(0, 0, 0, totalH)
+
+                    for idx, fileName in ipairs(fileList) do
+                        local itemBtn = create("TextButton", {
+                            Size = UDim2.new(1, -6, 0, 18),
+                            BackgroundTransparency = 1,
+                            Font = Enum.Font.Code,
+                            TextSize = 11,
+                            TextColor3 = (fileName == cfgTextBox.Text) and theme.TextActive or theme.TextInactive,
+                            Text = fileName,
+                            TextXAlignment = Enum.TextXAlignment.Left,
+                            ZIndex = 2001,
+                            Parent = cfgDropdownContainer
+                        })
+
+                        itemBtn.MouseButton1Click:Connect(function()
+                            cfgTextBox.Text = fileName
+                            cfgDropdownContainer.Visible = false
+                            refreshConfigList()
+                        end)
+                    end
+                end)
+            end
+            refreshConfigList()
+
+            local function toggleConfigDropdown()
+                pcall(function()
+                    if activeColorPicker then activeColorPicker.Visible = false end
+                    cfgDropdownContainer.Visible = not cfgDropdownContainer.Visible
+                    if cfgDropdownContainer.Visible then
+                        refreshConfigList()
+                        local fileList = getSavedConfigs()
+                        local absPos = cfgBoxContainer.AbsolutePosition
+                        local absSize = cfgBoxContainer.AbsoluteSize
+                        local totalH = (#fileList * 20) + 8
+                        cfgDropdownContainer.Size = UDim2.new(0, absSize.X, 0, math.min(totalH, 140))
+                        cfgDropdownContainer.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 2)
+                    end
+                end)
+            end
+
+            cfgArrowBtn.MouseButton1Click:Connect(toggleConfigDropdown)
+
+            UserInputService.InputBegan:Connect(function(input)
+                if cfgDropdownContainer.Visible and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+                    pcall(function()
+                        local pos = input.Position
+                        local boxPos = cfgBoxContainer.AbsolutePosition
+                        local boxSize = cfgBoxContainer.AbsoluteSize
+                        local dropPos = cfgDropdownContainer.AbsolutePosition
+                        local dropSize = cfgDropdownContainer.AbsoluteSize
+
+                        local inBox = (pos.X >= boxPos.X and pos.X <= boxPos.X + boxSize.X and pos.Y >= boxPos.Y and pos.Y <= boxPos.Y + boxSize.Y)
+                        local inDrop = (pos.X >= dropPos.X and pos.X <= dropPos.X + dropSize.X and pos.Y >= dropPos.Y and pos.Y <= dropPos.Y + dropSize.Y)
+
+                        if not inBox and not inDrop then
+                            cfgDropdownContainer.Visible = false
+                        end
+                    end)
+                end
+            end)
+
+            configGroup:AddButton("Create Config", function()
+                local name = cfgTextBox.Text
+                if not name or name == "" then name = "default" end
                 Window:SaveConfig(name)
-                local updatedList = getSavedConfigs()
-                cfgDropdown:SetOptions(updatedList)
-                cfgDropdown:SetSelected(name)
-            end, "Load Config", function()
-                local name = cfgDropdown:GetSelected() or cfgInput.GetText() or "default"
+                refreshConfigList()
+            end)
+
+            configGroup:AddButton("Load Config", function()
+                local name = cfgTextBox.Text
+                if not name or name == "" then name = "default" end
                 Window:LoadConfig(name)
             end)
 
-            configGroup:AddDoubleButton("Delete Config", function()
-                local name = cfgDropdown:GetSelected()
+            configGroup:AddButton("Delete Config", function()
+                local name = cfgTextBox.Text
                 if name and name ~= "" then
                     Window:DeleteConfig(name)
-                    local updatedList = getSavedConfigs()
-                    cfgDropdown:SetOptions(updatedList)
+                    refreshConfigList()
+                    local remaining = getSavedConfigs()
+                    cfgTextBox.Text = remaining[1] or "default"
                 end
-            end, "Refresh List", function()
-                local updatedList = getSavedConfigs()
-                cfgDropdown:SetOptions(updatedList)
-                Window:Notify("Lunex Hub", "Refreshed configs list", 2.5)
-            end)
-
-            configGroup:AddButton("Reset Theme", function()
-                Window:ResetThemeToDefault()
-                Window:Notify("Lunex Hub", "Theme reset to default launch colors", 3.0)
             end)
         end
     end)
