@@ -1520,6 +1520,8 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             end
             
             keybindBtn.MouseButton1Click:Connect(function()
+                if binding then return end
+
                 local now = os.clock()
                 if now - lastClickTime < 0.35 then
                     binding = false
@@ -1533,29 +1535,35 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 end
                 lastClickTime = now
                 
-                if binding then return end
                 binding = true
                 keybindBtn.Text = "[...]"
                 keybindBtn.TextColor3 = theme.SecondaryAccent
                 Window:UpdateKeybindInList(text or "Toggle", "...", currentMode, false)
                 
                 local conn
-                conn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-                    if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.Unknown then
-                        currentKey = input.KeyCode
-                        binding = false
-                        conn:Disconnect()
-                        keybindBtn.TextColor3 = theme.TextInactive
-                        updateKeybindDisplay(state)
-                        if keyCallback then pcall(keyCallback, currentKey) end
-                    elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 or input.UserInputType == Enum.UserInputType.MouseButton3 then
-                        currentKey = input.UserInputType
-                        binding = false
-                        conn:Disconnect()
-                        keybindBtn.TextColor3 = theme.TextInactive
-                        updateKeybindDisplay(state)
-                        if keyCallback then pcall(keyCallback, currentKey) end
-                    end
+                task.defer(function()
+                    conn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                        if not binding then
+                            if conn then conn:Disconnect() end
+                            return
+                        end
+
+                        local keyToBind = nil
+                        if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.Unknown then
+                            keyToBind = input.KeyCode
+                        elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 or input.UserInputType == Enum.UserInputType.MouseButton3 then
+                            keyToBind = input.UserInputType
+                        end
+
+                        if keyToBind then
+                            currentKey = keyToBind
+                            binding = false
+                            if conn then conn:Disconnect() end
+                            keybindBtn.TextColor3 = theme.TextInactive
+                            updateKeybindDisplay(state)
+                            if keyCallback then pcall(keyCallback, currentKey) end
+                        end
+                    end)
                 end)
             end)
             
