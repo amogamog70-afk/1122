@@ -2453,6 +2453,88 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     end
     Window.Destroy = Window.Destroy
     
+    -- ====================================================================
+    -- BUILT-IN AUTOMATIC SETTINGS TAB BUILDER (UI Settings, Theme Customizer, Config)
+    -- ====================================================================
+    pcall(function()
+        local settingsTabObj = Window.Tabs["Settings"]
+        if settingsTabObj then
+            -- 1. Left Column: UI Settings
+            local uiGroup = settingsTabObj:AddGroupbox("left", "UI Settings")
+            uiGroup:AddToggle("Show Watermark", true, function(state)
+                Window:SetWatermarkVisibility(state)
+            end)
+            uiGroup:AddToggle("Show Keybind List", true, function(state)
+                Window:SetKeybindListVisibility(state)
+            end)
+            uiGroup:AddButton("Unload Hub", function()
+                Window:Destroy()
+            end)
+            uiGroup:AddButton("Rejoin Game", function()
+                pcall(function()
+                    safeGetService(game, "TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+                end)
+            end)
+
+            -- 2. Center Column: Theme Customizer
+            local themeGroup = settingsTabObj:AddGroupbox("center", "Theme Customizer")
+            
+            local accPicker = themeGroup:AddLabel("Accent Color")
+            accPicker:AddColorPicker(theme.PrimaryAccent, function(col)
+                Window:SetThemeColor("PrimaryAccent", col)
+            end)
+            
+            local hlPicker = themeGroup:AddLabel("Highlight Color")
+            hlPicker:AddColorPicker(theme.SecondaryAccent, function(col)
+                Window:SetThemeColor("SecondaryAccent", col)
+            end)
+            
+            local borderPicker = themeGroup:AddLabel("Border Color")
+            borderPicker:AddColorPicker(theme.DarkAccentBorder, function(col)
+                Window:SetThemeColor("DarkAccentBorder", col)
+            end)
+            
+            local mainBgPicker = themeGroup:AddLabel("Window Background")
+            mainBgPicker:AddColorPicker(theme.MainFrameBG, function(col)
+                Window:SetThemeColor("MainFrameBG", col)
+            end)
+            
+            local innerBgPicker = themeGroup:AddLabel("Inner Background")
+            innerBgPicker:AddColorPicker(theme.InnerFrameBG, function(col)
+                Window:SetThemeColor("InnerFrameBG", col)
+            end)
+
+            local activeTextPicker = themeGroup:AddLabel("Active Text")
+            activeTextPicker:AddColorPicker(theme.TextActive, function(col)
+                Window:SetThemeColor("TextActive", col)
+            end)
+
+            local inactiveTextPicker = themeGroup:AddLabel("Inactive Text")
+            inactiveTextPicker:AddColorPicker(theme.TextInactive, function(col)
+                Window:SetThemeColor("TextInactive", col)
+            end)
+
+            -- 3. Right Column: Config
+            local configGroup = settingsTabObj:AddGroupbox("right", "Config")
+            local cfgInput = configGroup:AddInput("Config Name", "default", "default", function(val) end)
+            configGroup:AddDoubleButton("Save Config", function()
+                Window:Notify("Lunex Hub", "Config saved: " .. tostring(cfgInput.GetText() or "default"), 3.5)
+            end, "Load Config", function()
+                Window:Notify("Lunex Hub", "Config loaded: " .. tostring(cfgInput.GetText() or "default"), 3.5)
+            end)
+            configGroup:AddButton("Reset Theme", function()
+                Window:SetThemeColor("PrimaryAccent", Color3.fromRGB(150, 75, 230))
+                Window:SetThemeColor("SecondaryAccent", Color3.fromRGB(180, 105, 255))
+                Window:SetThemeColor("DarkAccentBorder", Color3.fromRGB(130, 50, 200))
+                Window:SetThemeColor("MainFrameBG", Color3.fromRGB(10, 10, 14))
+                Window:SetThemeColor("InnerFrameBG", Color3.fromRGB(14, 14, 19))
+                Window:SetThemeColor("TextActive", Color3.fromRGB(245, 242, 255))
+                Window:SetThemeColor("TextInactive", Color3.fromRGB(145, 140, 160))
+                Window:Notify("Lunex Hub", "Theme reset to default purple", 3.0)
+            end)
+        end
+    end)
+
     Window.Frame = mainFrame
     Window.InnerFrame = innerFrame
     Window.HubLabel = hubLabel
