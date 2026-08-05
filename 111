@@ -384,11 +384,11 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     -- KEYBIND LIST (LinoriaLib Style: Small Draggable Box with Header & Line)
     -- ====================================================================
     local keybindFrame = create("Frame", {
-        Size = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(0, 210, 0, 0),
         Position = UDim2.new(0, 16, 0, 46),
         BackgroundColor3 = theme.MainFrameBG,
         BorderSizePixel = 0,
-        AutomaticSize = Enum.AutomaticSize.XY,
+        AutomaticSize = Enum.AutomaticSize.Y,
         ZIndex = 100,
         Parent = screenGui
     })
@@ -474,41 +474,32 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 local row = create("Frame", {
                     Size = UDim2.new(1, 0, 0, 18),
                     BackgroundTransparency = 1,
-                    AutomaticSize = Enum.AutomaticSize.X,
                     ZIndex = 101,
                     Parent = keybindContainer
                 })
 
-                local rowLayout = create("UIListLayout", {
-                    FillDirection = Enum.FillDirection.Horizontal,
-                    HorizontalAlignment = Enum.HorizontalAlignment.Left,
-                    VerticalAlignment = Enum.VerticalAlignment.Center,
-                    SortOrder = Enum.SortOrder.LayoutOrder,
-                    Padding = UDim.new(0, 10),
-                    Parent = row
-                })
-
                 local nameLbl = create("TextLabel", {
-                    Size = UDim2.new(0, 0, 1, 0),
-                    AutomaticSize = Enum.AutomaticSize.X,
+                    Size = UDim2.new(0.62, -4, 1, 0),
+                    Position = UDim2.new(0, 0, 0, 0),
                     BackgroundTransparency = 1,
                     Font = Enum.Font.Code,
-                    TextSize = 12,
+                    TextSize = 11,
                     TextColor3 = nameColor,
                     TextXAlignment = Enum.TextXAlignment.Left,
+                    TextTruncate = Enum.TextTruncate.AtEnd,
                     Text = name,
                     ZIndex = 102,
                     Parent = row
                 })
 
                 local valLbl = create("TextLabel", {
-                    Size = UDim2.new(0, 0, 1, 0),
-                    AutomaticSize = Enum.AutomaticSize.X,
+                    Size = UDim2.new(0.38, 0, 1, 0),
+                    Position = UDim2.new(0.62, 0, 0, 0),
                     BackgroundTransparency = 1,
                     Font = Enum.Font.Code,
-                    TextSize = 12,
+                    TextSize = 11,
                     TextColor3 = valColor,
-                    TextXAlignment = Enum.TextXAlignment.Left,
+                    TextXAlignment = Enum.TextXAlignment.Right,
                     Text = displayText,
                     ZIndex = 102,
                     Parent = row
@@ -1411,21 +1402,19 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Parent = keybindBtn
             })
             
-            local currentKey = defaultKey
+            local currentKey = (typeof(defaultKey) == "EnumItem") and defaultKey or nil
+            local keyCallback = (typeof(defaultKey) == "function") and defaultKey or keyCallback
             local currentMode = "Toggle"
             local binding = false
             local lastClickTime = 0
             
             local function getKeyName(key)
-                if not key then return "NONE" end
-                if typeof(key) == "EnumItem" then
-                    local name = key.Name
-                    if name:sub(1, 11) == "MouseButton" then
-                        return "MB" .. name:sub(12)
-                    end
-                    return name:upper()
+                if not key or typeof(key) ~= "EnumItem" then return "NONE" end
+                local name = key.Name
+                if name:sub(1, 11) == "MouseButton" then
+                    return "MB" .. name:sub(12)
                 end
-                return tostring(key):upper()
+                return name:upper()
             end
             
             local function updateKeybindDisplay(isActiveOverride)
@@ -1437,7 +1426,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     Window:UpdateKeybindInList(text or "Toggle", "NONE", currentMode, false)
                 elseif currentMode == "Always" then
                     keybindBtn.Text = "[ALWAYS]"
-                    if not state then updateToggle(true) else Window:UpdateKeybindInList(text or "Toggle", keyStr, currentMode, true) end
+                    Window:UpdateKeybindInList(text or "Toggle", keyStr, currentMode, true)
                 else
                     keybindBtn.Text = "[" .. keyStr .. "]"
                     Window:UpdateKeybindInList(text or "Toggle", keyStr, currentMode, active)
@@ -1451,14 +1440,14 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             updateKeybindDisplay(state)
             
             local modePopup = create("Frame", {
-                Size = UDim2.new(0, 70, 0, 0),
-                Position = UDim2.new(1, 4, 0, 0),
+                Size = UDim2.new(0, 70, 0, 58),
+                Position = UDim2.new(0, 0, 0, 0),
                 BackgroundColor3 = theme.MainFrameBG,
                 BorderSizePixel = 0,
                 Visible = false,
                 ClipsDescendants = true,
-                ZIndex = 50,
-                Parent = keybindBtn
+                ZIndex = 2000,
+                Parent = screenGui
             })
             themeElements.MainFrameBGFills[modePopup] = true
             
@@ -1494,15 +1483,12 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     TextSize = 11,
                     TextColor3 = (modeName == currentMode) and theme.TextActive or theme.TextInactive,
                     Text = modeName,
-                    ZIndex = 51,
+                    ZIndex = 2001,
                     Parent = modePopup
                 })
                 
                 mBtn.MouseButton1Click:Connect(function()
                     currentMode = modeName
-                    if currentMode == "Always" then
-                        updateToggle(true)
-                    end
                     updateKeybindDisplay(state)
                     modePopup.Visible = false
                 end)
@@ -1549,11 +1535,32 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             end)
             
             keybindBtn.MouseButton2Click:Connect(function()
-                modePopup.Size = UDim2.new(0, 70, 0, 58)
                 modePopup.Visible = not modePopup.Visible
+                if modePopup.Visible then
+                    local absPos = keybindBtn.AbsolutePosition
+                    local absSize = keybindBtn.AbsoluteSize
+                    modePopup.Position = UDim2.new(0, absPos.X + absSize.X + 4, 0, absPos.Y)
+                end
             end)
             
             UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                if modePopup.Visible and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+                    pcall(function()
+                        local pos = input.Position
+                        local btnPos = keybindBtn.AbsolutePosition
+                        local btnSize = keybindBtn.AbsoluteSize
+                        local popPos = modePopup.AbsolutePosition
+                        local popSize = modePopup.AbsoluteSize
+
+                        local inBtn = (pos.X >= btnPos.X and pos.X <= btnPos.X + btnSize.X and pos.Y >= btnPos.Y and pos.Y <= btnPos.Y + btnSize.Y)
+                        local inPop = (pos.X >= popPos.X and pos.X <= popPos.X + popSize.X and pos.Y >= popPos.Y and pos.Y <= popPos.Y + popSize.Y)
+
+                        if not inBtn and not inPop then
+                            modePopup.Visible = false
+                        end
+                    end)
+                end
+
                 if binding or not currentKey then return end
                 if UserInputService:GetFocusedTextBox() ~= nil then return end
                 if currentMode == "Always" then return end
