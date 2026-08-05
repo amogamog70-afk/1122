@@ -2805,6 +2805,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 SecondaryAccent = theme.SecondaryAccent:ToHex(),
                 DarkAccentBorder = theme.DarkAccentBorder:ToHex(),
                 MainFrameBG = theme.MainFrameBG:ToHex(),
+                InnerFrameBG = theme.InnerFrameBG:ToHex(),
                 TextActive = theme.TextActive:ToHex(),
                 TextInactive = theme.TextInactive:ToHex(),
                 LogoColor = theme.LogoColor:ToHex(),
@@ -2879,15 +2880,19 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         end
 
         pcall(function()
-            -- 1. Restore Theme
+            -- 1. Restore Theme & Theme Pickers
             if data.Theme then
-                if data.Theme.PrimaryAccent then Window:SetThemeColor("PrimaryAccent", Color3.fromHex(data.Theme.PrimaryAccent)) end
-                if data.Theme.SecondaryAccent then Window:SetThemeColor("SecondaryAccent", Color3.fromHex(data.Theme.SecondaryAccent)) end
-                if data.Theme.DarkAccentBorder then Window:SetThemeColor("DarkAccentBorder", Color3.fromHex(data.Theme.DarkAccentBorder)) end
-                if data.Theme.MainFrameBG then Window:SetThemeColor("MainFrameBG", Color3.fromHex(data.Theme.MainFrameBG)) end
-                if data.Theme.TextActive then Window:SetThemeColor("TextActive", Color3.fromHex(data.Theme.TextActive)) end
-                if data.Theme.TextInactive then Window:SetThemeColor("TextInactive", Color3.fromHex(data.Theme.TextInactive)) end
-                if data.Theme.LogoColor then Window:SetThemeColor("LogoColor", Color3.fromHex(data.Theme.LogoColor)) end
+                for prop, hex in pairs(data.Theme) do
+                    pcall(function()
+                        local col = Color3.fromHex(hex)
+                        if col then
+                            Window:SetThemeColor(prop, col)
+                            if themePickers[prop] then
+                                pcall(function() themePickers[prop]:SetColor(col) end)
+                            end
+                        end
+                    end)
+                end
             end
 
             -- 2. Restore UI Visibility
@@ -2896,7 +2901,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 if data.UI.KeybindListVisible ~= nil then Window:SetKeybindListVisibility(data.UI.KeybindListVisible) end
             end
 
-            -- 3. Restore Flags
+            -- 3. Restore Flags (All Toggles, Sliders, Dropdowns, Keybinds, ColorPickers)
             if data.Flags then
                 for flagName, val in pairs(data.Flags) do
                     local item = registry[flagName]
