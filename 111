@@ -606,10 +606,10 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         createNotification(title, content, duration)
     end
     
-    -- Outer Main Frame (Size: 750 x 560) - Obsidian Black
+    -- Outer Main Frame (Size: 750 x 560) - Obsidian Black (Positioned Right Side)
     local mainFrame = create("Frame", {
         Size = UDim2.new(0, 750, 0, 560),
-        Position = UDim2.new(0.5, -375, 0.5, -280),
+        Position = UDim2.new(0.65, -375, 0.5, -280),
         BackgroundColor3 = theme.MainFrameBG,
         BorderSizePixel = 0,
         Visible = true,
@@ -1147,6 +1147,19 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             PaddingRight = UDim.new(0, 0),
             Parent = container
         })
+        
+        local function refreshGroupboxSize()
+            pcall(function()
+                local contentH = groupLayout.AbsoluteContentSize.Y
+                container.Size = UDim2.new(1, 0, 0, contentH)
+                groupFrame.Size = UDim2.new(1, -8, 0, contentH + 30)
+            end)
+        end
+        
+        groupLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(refreshGroupboxSize)
+        container.ChildAdded:Connect(function() task.defer(refreshGroupboxSize) end)
+        container.ChildRemoved:Connect(function() task.defer(refreshGroupboxSize) end)
+        task.defer(refreshGroupboxSize)
         
         local Groupbox = {}
         Groupbox.Frame = groupFrame
