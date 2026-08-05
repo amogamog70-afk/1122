@@ -205,8 +205,27 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         ControlBorder = Color3.fromRGB(48, 44, 60),          -- Control Edge (#302C3C)
         TextActive = Color3.fromRGB(245, 242, 255),          -- Pure White (#F5F2FF)
         TextHover = Color3.fromRGB(200, 195, 215),           -- Soft Silver (#C8C3D7)
-        TextInactive = Color3.fromRGB(145, 140, 160)         -- Slate Gray (#918CA0)
+        TextInactive = Color3.fromRGB(145, 140, 160),        -- Slate Gray (#918CA0)
+        LogoColor = Color3.fromRGB(255, 255, 255)            -- White Logo (#FFFFFF)
     }
+
+    -- Global Live Theme Registry
+    local themeElements = {
+        PrimaryAccentFills = {},
+        PrimaryAccentStrokes = {},
+        PrimaryAccentText = {},
+        SecondaryAccentText = {},
+        SecondaryAccentStrokes = {},
+        DarkAccentBorderStrokes = {},
+        MainFrameBGFills = {},
+        InnerFrameBGFills = {},
+        GroupboxBGFills = {},
+        TextActiveLabels = {},
+        TextInactiveLabels = {},
+        LogoImages = {}
+    }
+    Window.ThemeElements = themeElements
+    Window.Theme = theme
 
     -- Main ScreenGui with randomized stealth name, realistic DisplayOrder, and executor protection
     local screenGui = create("ScreenGui", {
@@ -229,6 +248,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         ZIndex = 100,
         Parent = screenGui
     })
+    themeElements.MainFrameBGFills[watermarkFrame] = true
 
     makeDraggable(watermarkFrame, watermarkFrame)
 
@@ -239,6 +259,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = watermarkFrame
     })
+    themeElements.DarkAccentBorderStrokes[watermarkStroke] = true
 
     local wmLayout = create("UIListLayout", {
         FillDirection = Enum.FillDirection.Horizontal,
@@ -282,19 +303,34 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         LayoutOrder = 0,
         Size = UDim2.new(0, 28, 0, 28),
         Image = "rbxassetid://14303304734",
+        ImageColor3 = theme.LogoColor,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ZIndex = 101,
         Parent = watermarkFrame
     })
+    themeElements.LogoImages[wmLogo] = true
 
     local titleLbl = createWmLabel("WmTitle", wmTitleText, theme.TextActive, 1, 15)
+    themeElements.TextActiveLabels[titleLbl] = true
+
     local sep1 = createWmLabel("Sep1", "|", theme.PrimaryAccent, 2, 14)
+    themeElements.PrimaryAccentText[sep1] = true
+
     local fpsLbl = createWmLabel("WmFps", "fps 60", theme.TextActive, 3, 14)
+    themeElements.SecondaryAccentText[fpsLbl] = true
+
     local sep2 = createWmLabel("Sep2", "|", theme.PrimaryAccent, 4, 14)
+    themeElements.PrimaryAccentText[sep2] = true
+
     local msLbl = createWmLabel("WmMs", "ms 12", theme.TextActive, 5, 14)
+    themeElements.SecondaryAccentText[msLbl] = true
+
     local sep3 = createWmLabel("Sep3", "|", theme.PrimaryAccent, 6, 14)
+    themeElements.PrimaryAccentText[sep3] = true
+
     local userLbl = createWmLabel("WmUser", playerName, theme.TextActive, 7, 14)
+    themeElements.SecondaryAccentText[userLbl] = true
 
     local currentFps = 60
     local lastFpsUpdate = os.clock()
@@ -349,6 +385,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         ZIndex = 100,
         Parent = screenGui
     })
+    themeElements.MainFrameBGFills[keybindFrame] = true
 
     makeDraggable(keybindFrame, keybindFrame)
 
@@ -359,6 +396,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = keybindFrame
     })
+    themeElements.DarkAccentBorderStrokes[keybindStroke] = true
 
     local keybindTitle = create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 24),
@@ -372,6 +410,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         ZIndex = 101,
         Parent = keybindFrame
     })
+    themeElements.TextActiveLabels[keybindTitle] = true
 
     local keybindLine = create("Frame", {
         Size = UDim2.new(1, -16, 0, 1),
@@ -381,6 +420,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         ZIndex = 101,
         Parent = keybindFrame
     })
+    themeElements.PrimaryAccentFills[keybindLine] = true
 
     local keybindContainer = create("Frame", {
         Size = UDim2.new(1, 0, 0, 0),
@@ -615,6 +655,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         Visible = true,
         Parent = screenGui
     })
+    themeElements.MainFrameBGFills[mainFrame] = true
     
     local modalBlocker = Instance.new("TextButton")
     modalBlocker.Name = getRandomName()
@@ -636,6 +677,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = mainFrame
     })
+    themeElements.DarkAccentBorderStrokes[stroke] = true
     
     local innerFrame = create("Frame", {
         Size = UDim2.new(1, -4, 1, -4),
@@ -644,6 +686,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         BorderSizePixel = 0,
         Parent = mainFrame
     })
+    themeElements.InnerFrameBGFills[innerFrame] = true
     
     local innerStroke = create("UIStroke", {
         Thickness = 1.0,
@@ -674,11 +717,13 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         LayoutOrder = 0,
         Size = UDim2.new(0, 36, 0, 36),
         Image = "rbxassetid://14303304734",
+        ImageColor3 = theme.LogoColor,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ZIndex = 105,
         Parent = headerContainer
     })
+    themeElements.LogoImages[hubLogo] = true
     
     local hubLabel = create("TextLabel", {
         LayoutOrder = 1,
@@ -691,6 +736,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         Size = UDim2.new(0, 0, 1, 0),
         Parent = headerContainer
     })
+    themeElements.TextActiveLabels[hubLabel] = true
     
     local verticalDivider = create("Frame", {
         LayoutOrder = 2,
@@ -699,6 +745,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         BorderSizePixel = 0,
         Parent = headerContainer
     })
+    themeElements.PrimaryAccentFills[verticalDivider] = true
     
     local placeLabel = create("TextLabel", {
         LayoutOrder = 3,
@@ -711,6 +758,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         Size = UDim2.new(0, 0, 1, 0),
         Parent = headerContainer
     })
+    themeElements.TextInactiveLabels[placeLabel] = true
     
     local tabsContainer = create("Frame", {
         Size = UDim2.new(1, -28, 0, 26),
@@ -970,6 +1018,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         BorderSizePixel = 0,
         Parent = topLinesContainer
     })
+    themeElements.PrimaryAccentFills[leftLine] = true
     
     local centerLine = create("Frame", {
         Size = UDim2.new(0.31, 0, 0, 1),
@@ -979,6 +1028,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         BorderSizePixel = 0,
         Parent = topLinesContainer
     })
+    themeElements.PrimaryAccentFills[centerLine] = true
     
     local rightLine = create("Frame", {
         Size = UDim2.new(0.31, 0, 0, 1),
@@ -988,6 +1038,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         BorderSizePixel = 0,
         Parent = topLinesContainer
     })
+    themeElements.PrimaryAccentFills[rightLine] = true
     
     local dropLinesContainer = create("Frame", {
         Size = UDim2.new(1, -28, 1, -88),
@@ -1036,6 +1087,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         TextXAlignment = Enum.TextXAlignment.Center,
         Parent = sectionHeadersContainer
     })
+    themeElements.TextInactiveLabels[leftSectionLabel] = true
     
     local centerSectionLabel = create("TextLabel", {
         Size = UDim2.new(0.31, 0, 1, 0),
@@ -1049,6 +1101,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         TextXAlignment = Enum.TextXAlignment.Center,
         Parent = sectionHeadersContainer
     })
+    themeElements.TextInactiveLabels[centerSectionLabel] = true
     
     local rightSectionLabel = create("TextLabel", {
         Size = UDim2.new(0.31, 0, 1, 0),
@@ -1062,6 +1115,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         TextXAlignment = Enum.TextXAlignment.Center,
         Parent = sectionHeadersContainer
     })
+    themeElements.TextInactiveLabels[rightSectionLabel] = true
 
     local function updateColumnHeaderTitles(tabName)
         local titles = tabColumnTitles[tabName] or { "Main Section", "Targeting", "Extra" }
@@ -1091,12 +1145,12 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         
         local groupFrame = create("Frame", {
             Size = UDim2.new(1, -8, 0, 0),
-            AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundColor3 = theme.GroupboxBG,
             BackgroundTransparency = 0.35,
             BorderSizePixel = 0,
             Parent = parentCol
         })
+        themeElements.GroupboxBGFills[groupFrame] = true
         
         local groupStroke = create("UIStroke", {
             Thickness = 1.0,
@@ -1105,6 +1159,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
             Parent = groupFrame
         })
+        themeElements.DarkAccentBorderStrokes[groupStroke] = true
         
         local titleLabel = create("TextLabel", {
             Size = UDim2.new(1, -16, 0, 18),
@@ -1117,6 +1172,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             Text = tostring(titleText or "Groupbox"),
             Parent = groupFrame
         })
+        themeElements.TextActiveLabels[titleLabel] = true
         
         local titleSep = create("Frame", {
             Size = UDim2.new(1, -12, 0, 1),
@@ -1125,11 +1181,11 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             BorderSizePixel = 0,
             Parent = groupFrame
         })
+        themeElements.PrimaryAccentFills[titleSep] = true
         
         local container = create("Frame", {
             Size = UDim2.new(1, 0, 0, 0),
             Position = UDim2.new(0, 0, 0, 24),
-            AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
             Parent = groupFrame
         })
@@ -1240,12 +1296,21 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = toggleFrame
         })
+        themeElements.TextActiveLabels[toggleLabel] = true
         
         local function updateToggle(newState)
             state = newState
             local boxColor = state and theme.PrimaryAccent or theme.ControlBG
             local strokeColor = state and theme.SecondaryAccent or theme.ControlBorder
             local textColor = state and theme.TextActive or theme.TextInactive
+            
+            if state then
+                themeElements.PrimaryAccentFills[toggleBox] = true
+                themeElements.SecondaryAccentStrokes[toggleStroke] = true
+            else
+                themeElements.PrimaryAccentFills[toggleBox] = nil
+                themeElements.SecondaryAccentStrokes[toggleStroke] = nil
+            end
             
             TweenService:Create(toggleBox, TweenInfo.new(0.15), {BackgroundColor3 = boxColor}):Play()
             TweenService:Create(toggleStroke, TweenInfo.new(0.15), {Color = strokeColor}):Play()
@@ -1367,6 +1432,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 ZIndex = 50,
                 Parent = keybindBtn
             })
+            themeElements.MainFrameBGFills[modePopup] = true
             
             local popupStroke = create("UIStroke", {
                 Thickness = 1.0,
@@ -1375,6 +1441,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
                 Parent = modePopup
             })
+            themeElements.DarkAccentBorderStrokes[popupStroke] = true
             
             local modeLayout = create("UIListLayout", {
                 SortOrder = Enum.SortOrder.LayoutOrder,
@@ -1527,6 +1594,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 ZIndex = 200,
                 Parent = pickerBtn
             })
+            themeElements.MainFrameBGFills[pickerPopup] = true
             
             local popupStroke = create("UIStroke", {
                 Thickness = 1.4,
@@ -1535,6 +1603,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
                 Parent = pickerPopup
             })
+            themeElements.DarkAccentBorderStrokes[popupStroke] = true
 
             local gridContainer = create("Frame", {
                 Size = UDim2.new(1, -12, 0, 108),
@@ -1695,6 +1764,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = sliderFrame
         })
+        themeElements.TextActiveLabels[sliderLabel] = true
         
         local valueLabel = create("TextLabel", {
             Size = UDim2.new(0.35, -10, 0, 16),
@@ -1707,6 +1777,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             TextXAlignment = Enum.TextXAlignment.Right,
             Parent = sliderFrame
         })
+        themeElements.SecondaryAccentText[valueLabel] = true
         
         local track = create("TextButton", {
             Size = UDim2.new(1, -20, 0, 8),
@@ -1733,6 +1804,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             BorderSizePixel = 0,
             Parent = track
         })
+        themeElements.PrimaryAccentFills[fill] = true
         
         local fillStroke = create("UIStroke", {
             Thickness = 1.0,
@@ -1741,6 +1813,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
             Parent = fill
         })
+        themeElements.SecondaryAccentStrokes[fillStroke] = true
         
         local currentValue = defaultVal
         local sliding = false
@@ -1817,6 +1890,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = dropdownFrame
         })
+        themeElements.TextActiveLabels[label] = true
         
         local mainBtn = create("TextButton", {
             Size = UDim2.new(1, -20, 0, 22),
@@ -1847,6 +1921,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = mainBtn
         })
+        themeElements.TextActiveLabels[btnText] = true
         
         local arrowLbl = create("TextLabel", {
             Size = UDim2.new(0, 16, 1, 0),
@@ -1870,13 +1945,15 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             ZIndex = 150,
             Parent = mainBtn
         })
+        themeElements.MainFrameBGFills[optionsContainer] = true
         
-        create("UIStroke", {
+        local optStroke = create("UIStroke", {
             Thickness = 1.0,
             Color = theme.DarkAccentBorder,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
             Parent = optionsContainer
         })
+        themeElements.DarkAccentBorderStrokes[optStroke] = true
         
         local optionLayout = create("UIListLayout", {
             SortOrder = Enum.SortOrder.LayoutOrder,
@@ -1951,6 +2028,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = dropdownFrame
         })
+        themeElements.TextActiveLabels[label] = true
         
         local mainBtn = create("TextButton", {
             Size = UDim2.new(1, -20, 0, 22),
@@ -1991,6 +2069,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = mainBtn
         })
+        themeElements.TextActiveLabels[btnText] = true
         
         local optionsContainer = create("Frame", {
             Size = UDim2.new(1, 0, 0, 0),
@@ -2002,13 +2081,15 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             ZIndex = 150,
             Parent = mainBtn
         })
+        themeElements.MainFrameBGFills[optionsContainer] = true
         
-        create("UIStroke", {
+        local optStroke = create("UIStroke", {
             Thickness = 1.0,
             Color = theme.DarkAccentBorder,
             ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
             Parent = optionsContainer
         })
+        themeElements.DarkAccentBorderStrokes[optStroke] = true
         
         create("UIListLayout", {
             SortOrder = Enum.SortOrder.LayoutOrder,
@@ -2076,6 +2157,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = inputFrame
         })
+        themeElements.TextActiveLabels[label] = true
         
         local textBox = create("TextBox", {
             Size = UDim2.new(1, -20, 0, 22),
@@ -2091,6 +2173,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             ClearTextOnFocus = false,
             Parent = inputFrame
         })
+        themeElements.TextActiveLabels[textBox] = true
         
         create("UIStroke", {
             Thickness = 1.0,
@@ -2135,6 +2218,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             AutoButtonColor = false,
             Parent = btnFrame
         })
+        themeElements.TextActiveLabels[btn] = true
         
         local stroke = create("UIStroke", {
             Thickness = 1.0,
@@ -2178,6 +2262,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             AutoButtonColor = false,
             Parent = btnFrame
         })
+        themeElements.TextActiveLabels[btn1] = true
         
         create("UIStroke", {
             Thickness = 1.0,
@@ -2198,6 +2283,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             AutoButtonColor = false,
             Parent = btnFrame
         })
+        themeElements.TextActiveLabels[btn2] = true
         
         create("UIStroke", {
             Thickness = 1.0,
@@ -2231,6 +2317,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = labelFrame
         })
+        themeElements.TextActiveLabels[textLabel] = true
         
         local labelObj = {}
         labelObj.Frame = labelFrame
@@ -2265,6 +2352,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 ZIndex = 200,
                 Parent = pickerBtn
             })
+            themeElements.MainFrameBGFills[pickerPopup] = true
             
             local popupStroke = create("UIStroke", {
                 Thickness = 1.4,
@@ -2273,6 +2361,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
                 Parent = pickerPopup
             })
+            themeElements.DarkAccentBorderStrokes[popupStroke] = true
 
             local gridContainer = create("Frame", {
                 Size = UDim2.new(1, -12, 0, 108),
@@ -2401,36 +2490,50 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         
         pcall(function()
             if propName == "PrimaryAccent" then
-                verticalDivider.BackgroundColor3 = newColor
-                leftLine.BackgroundColor3 = newColor
-                centerLine.BackgroundColor3 = newColor
-                rightLine.BackgroundColor3 = newColor
-                sep1.TextColor3 = newColor
-                sep2.TextColor3 = newColor
-                sep3.TextColor3 = newColor
-                keybindLine.BackgroundColor3 = newColor
+                for inst, _ in pairs(themeElements.PrimaryAccentFills) do
+                    if inst and inst.Parent then inst.BackgroundColor3 = newColor end
+                end
+                for inst, _ in pairs(themeElements.PrimaryAccentStrokes) do
+                    if inst and inst.Parent then inst.Color = newColor end
+                end
+                for inst, _ in pairs(themeElements.PrimaryAccentText) do
+                    if inst and inst.Parent then inst.TextColor3 = newColor end
+                end
             elseif propName == "SecondaryAccent" then
-                fpsLbl.TextColor3 = newColor
-                userLbl.TextColor3 = newColor
+                for inst, _ in pairs(themeElements.SecondaryAccentText) do
+                    if inst and inst.Parent then inst.TextColor3 = newColor end
+                end
+                for inst, _ in pairs(themeElements.SecondaryAccentStrokes) do
+                    if inst and inst.Parent then inst.Color = newColor end
+                end
             elseif propName == "DarkAccentBorder" then
-                stroke.Color = newColor
-                watermarkStroke.Color = newColor
-                keybindStroke.Color = newColor
+                for inst, _ in pairs(themeElements.DarkAccentBorderStrokes) do
+                    if inst and inst.Parent then inst.Color = newColor end
+                end
             elseif propName == "MainFrameBG" then
-                mainFrame.BackgroundColor3 = newColor
-                watermarkFrame.BackgroundColor3 = newColor
-                keybindFrame.BackgroundColor3 = newColor
+                for inst, _ in pairs(themeElements.MainFrameBGFills) do
+                    if inst and inst.Parent then inst.BackgroundColor3 = newColor end
+                end
             elseif propName == "InnerFrameBG" then
-                innerFrame.BackgroundColor3 = newColor
+                for inst, _ in pairs(themeElements.InnerFrameBGFills) do
+                    if inst and inst.Parent then inst.BackgroundColor3 = newColor end
+                end
+            elseif propName == "GroupboxBG" then
+                for inst, _ in pairs(themeElements.GroupboxBGFills) do
+                    if inst and inst.Parent then inst.BackgroundColor3 = newColor end
+                end
             elseif propName == "TextActive" then
-                hubLabel.TextColor3 = newColor
-                titleLbl.TextColor3 = newColor
-                keybindTitle.TextColor3 = newColor
+                for inst, _ in pairs(themeElements.TextActiveLabels) do
+                    if inst and inst.Parent then inst.TextColor3 = newColor end
+                end
             elseif propName == "TextInactive" then
-                placeLabel.TextColor3 = newColor
-                leftSectionLabel.TextColor3 = newColor
-                centerSectionLabel.TextColor3 = newColor
-                rightSectionLabel.TextColor3 = newColor
+                for inst, _ in pairs(themeElements.TextInactiveLabels) do
+                    if inst and inst.Parent then inst.TextColor3 = newColor end
+                end
+            elseif propName == "LogoColor" then
+                for inst, _ in pairs(themeElements.LogoImages) do
+                    if inst and inst.Parent then inst.ImageColor3 = newColor end
+                end
             end
         end)
     end
@@ -2514,6 +2617,11 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Window:SetThemeColor("TextInactive", col)
             end)
 
+            local logoPicker = themeGroup:AddLabel("Logo Color")
+            logoPicker:AddColorPicker(theme.LogoColor, function(col)
+                Window:SetThemeColor("LogoColor", col)
+            end)
+
             -- 3. Right Column: Config
             local configGroup = settingsTabObj:AddGroupbox("right", "Config")
             local cfgInput = configGroup:AddInput("Config Name", "default", "default", function(val) end)
@@ -2530,6 +2638,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 Window:SetThemeColor("InnerFrameBG", Color3.fromRGB(14, 14, 19))
                 Window:SetThemeColor("TextActive", Color3.fromRGB(245, 242, 255))
                 Window:SetThemeColor("TextInactive", Color3.fromRGB(145, 140, 160))
+                Window:SetThemeColor("LogoColor", Color3.fromRGB(255, 255, 255))
                 Window:Notify("Lunex Hub", "Theme reset to default purple", 3.0)
             end)
         end
