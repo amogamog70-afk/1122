@@ -324,19 +324,19 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     themeElements.PrimaryAccentText[sep1] = true
 
     local fpsLbl = createWmLabel("WmFps", "fps 60", theme.TextActive, 3, 14)
-    themeElements.SecondaryAccentText[fpsLbl] = true
+    themeElements.TextActiveLabels[fpsLbl] = true
 
     local sep2 = createWmLabel("Sep2", "|", theme.PrimaryAccent, 4, 14)
     themeElements.PrimaryAccentText[sep2] = true
 
     local msLbl = createWmLabel("WmMs", "ms 12", theme.TextActive, 5, 14)
-    themeElements.SecondaryAccentText[msLbl] = true
+    themeElements.TextActiveLabels[msLbl] = true
 
     local sep3 = createWmLabel("Sep3", "|", theme.PrimaryAccent, 6, 14)
     themeElements.PrimaryAccentText[sep3] = true
 
     local userLbl = createWmLabel("WmUser", playerName, theme.TextActive, 7, 14)
-    themeElements.SecondaryAccentText[userLbl] = true
+    themeElements.TextActiveLabels[userLbl] = true
 
     local currentFps = 60
     local lastFpsUpdate = os.clock()
@@ -1990,17 +1990,21 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             Parent = mainBtn
         })
         
-        local optionsContainer = create("Frame", {
+        local optionsContainer = create("ScrollingFrame", {
             Size = UDim2.new(0, 180, 0, 0),
             Position = UDim2.new(0, 0, 0, 0),
             BackgroundColor3 = theme.MainFrameBG,
             BorderSizePixel = 0,
             Visible = false,
             ClipsDescendants = true,
+            ScrollBarThickness = 3,
+            ScrollBarImageColor3 = theme.PrimaryAccent,
+            CanvasSize = UDim2.new(0, 0, 0, 0),
             ZIndex = 2000,
             Parent = screenGui
         })
         themeElements.MainFrameBGFills[optionsContainer] = true
+        themeElements.PrimaryAccentFills[optionsContainer] = true
         
         local optStroke = create("UIStroke", {
             Thickness = 1.0,
@@ -2024,30 +2028,47 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             Parent = optionsContainer
         })
         
+        local function updateContainerLayout()
+            pcall(function()
+                local totalH = (#options * 20) + 8
+                optionsContainer.CanvasSize = UDim2.new(0, 0, 0, totalH)
+                if optionsContainer.Visible then
+                    local absPos = mainBtn.AbsolutePosition
+                    local absSize = mainBtn.AbsoluteSize
+                    optionsContainer.Size = UDim2.new(0, absSize.X, 0, math.min(totalH, 140))
+                    optionsContainer.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 2)
+                end
+            end)
+        end
+
         local function rebuildOptions()
-            for _, child in ipairs(optionsContainer:GetChildren()) do
-                if child:IsA("TextButton") then child:Destroy() end
-            end
-            for idx, opt in ipairs(options) do
-                local optBtn = create("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 18),
-                    BackgroundTransparency = 1,
-                    Font = Enum.Font.Code,
-                    TextSize = 11,
-                    TextColor3 = (opt == selected) and theme.TextActive or theme.TextInactive,
-                    Text = tostring(opt),
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    ZIndex = 501,
-                    Parent = optionsContainer
-                })
-                
-                optBtn.MouseButton1Click:Connect(function()
-                    selected = opt
-                    btnText.Text = tostring(selected)
-                    optionsContainer.Visible = false
-                    if callback then pcall(callback, selected) end
-                end)
-            end
+            pcall(function()
+                for _, child in ipairs(optionsContainer:GetChildren()) do
+                    if child:IsA("TextButton") then child:Destroy() end
+                end
+                for idx, opt in ipairs(options) do
+                    local optBtn = create("TextButton", {
+                        Size = UDim2.new(1, -6, 0, 18),
+                        BackgroundTransparency = 1,
+                        Font = Enum.Font.Code,
+                        TextSize = 11,
+                        TextColor3 = (tostring(opt) == tostring(selected)) and theme.TextActive or theme.TextInactive,
+                        Text = tostring(opt),
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        ZIndex = 2001,
+                        Parent = optionsContainer
+                    })
+                    
+                    optBtn.MouseButton1Click:Connect(function()
+                        selected = opt
+                        btnText.Text = tostring(selected)
+                        optionsContainer.Visible = false
+                        rebuildOptions()
+                        if callback then pcall(callback, selected) end
+                    end)
+                end
+                updateContainerLayout()
+            end)
         end
         rebuildOptions()
         
@@ -2056,29 +2077,45 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 if activeColorPicker then activeColorPicker.Visible = false end
                 optionsContainer.Visible = not optionsContainer.Visible
                 if optionsContainer.Visible then
-                    local absPos = mainBtn.AbsolutePosition
-                    local absSize = mainBtn.AbsoluteSize
-                    local totalH = (#options * 20) + 8
-                    optionsContainer.Size = UDim2.new(0, absSize.X, 0, math.min(totalH, 140))
-                    optionsContainer.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 2)
+                    updateContainerLayout()
                 end
             end)
+        end)
+
+        UserInputService.InputBegan:Connect(function(input)
+            if optionsContainer.Visible and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+                pcall(function()
+                    local pos = input.Position
+                    local btnPos = mainBtn.AbsolutePosition
+                    local btnSize = mainBtn.AbsoluteSize
+                    local optPos = optionsContainer.AbsolutePosition
+                    local optSize = optionsContainer.AbsoluteSize
+
+                    local inBtn = (pos.X >= btnPos.X and pos.X <= btnPos.X + btnSize.X and pos.Y >= btnPos.Y and pos.Y <= btnPos.Y + btnSize.Y)
+                    local inOpt = (pos.X >= optPos.X and pos.X <= optPos.X + optSize.X and pos.Y >= optPos.Y and pos.Y <= optPos.Y + optSize.Y)
+
+                    if not inBtn and not inOpt then
+                        optionsContainer.Visible = false
+                    end
+                end)
+            end
         end)
         
         local dropdownObj = {
             SetSelected = function(val)
                 selected = val
                 btnText.Text = tostring(selected)
+                rebuildOptions()
                 if callback then pcall(callback, selected) end
             end,
             GetSelected = function() return selected end,
             SetOptions = function(newOpts)
                 options = newOpts or {}
-                rebuildOptions()
                 if not table.find(options, selected) then
                     selected = options[1] or ""
                     btnText.Text = tostring(selected)
                 end
+                rebuildOptions()
             end
         }
 
@@ -2154,17 +2191,21 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         })
         themeElements.TextActiveLabels[btnText] = true
         
-        local optionsContainer = create("Frame", {
+        local optionsContainer = create("ScrollingFrame", {
             Size = UDim2.new(0, 180, 0, 0),
             Position = UDim2.new(0, 0, 0, 0),
             BackgroundColor3 = theme.MainFrameBG,
             BorderSizePixel = 0,
             Visible = false,
             ClipsDescendants = true,
+            ScrollBarThickness = 3,
+            ScrollBarImageColor3 = theme.PrimaryAccent,
+            CanvasSize = UDim2.new(0, 0, 0, 0),
             ZIndex = 2000,
             Parent = screenGui
         })
         themeElements.MainFrameBGFills[optionsContainer] = true
+        themeElements.PrimaryAccentFills[optionsContainer] = true
         
         local optStroke = create("UIStroke", {
             Thickness = 1.0,
@@ -2188,16 +2229,29 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             Parent = optionsContainer
         })
         
+        local function updateMultiLayout()
+            pcall(function()
+                local totalH = (#options * 20) + 8
+                optionsContainer.CanvasSize = UDim2.new(0, 0, 0, totalH)
+                if optionsContainer.Visible then
+                    local absPos = mainBtn.AbsolutePosition
+                    local absSize = mainBtn.AbsoluteSize
+                    optionsContainer.Size = UDim2.new(0, absSize.X, 0, math.min(totalH, 140))
+                    optionsContainer.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 2)
+                end
+            end)
+        end
+
         for idx, opt in ipairs(options) do
             local optBtn = create("TextButton", {
-                Size = UDim2.new(1, 0, 0, 18),
+                Size = UDim2.new(1, -6, 0, 18),
                 BackgroundTransparency = 1,
                 Font = Enum.Font.Code,
                 TextSize = 11,
                 TextColor3 = selectedMap[opt] and theme.TextActive or theme.TextInactive,
                 Text = (selectedMap[opt] and "+ " or "- ") .. tostring(opt),
                 TextXAlignment = Enum.TextXAlignment.Left,
-                ZIndex = 151,
+                ZIndex = 2001,
                 Parent = optionsContainer
             })
             
@@ -2209,11 +2263,35 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 if callback then pcall(callback, selectedMap) end
             end)
         end
+        updateMultiLayout()
         
         mainBtn.MouseButton1Click:Connect(function()
-            local totalH = (#options * 20) + 8
-            optionsContainer.Size = UDim2.new(1, 0, 0, math.min(totalH, 140))
-            optionsContainer.Visible = not optionsContainer.Visible
+            pcall(function()
+                if activeColorPicker then activeColorPicker.Visible = false end
+                optionsContainer.Visible = not optionsContainer.Visible
+                if optionsContainer.Visible then
+                    updateMultiLayout()
+                end
+            end)
+        end)
+
+        UserInputService.InputBegan:Connect(function(input)
+            if optionsContainer.Visible and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+                pcall(function()
+                    local pos = input.Position
+                    local btnPos = mainBtn.AbsolutePosition
+                    local btnSize = mainBtn.AbsoluteSize
+                    local optPos = optionsContainer.AbsolutePosition
+                    local optSize = optionsContainer.AbsoluteSize
+
+                    local inBtn = (pos.X >= btnPos.X and pos.X <= btnPos.X + btnSize.X and pos.Y >= btnPos.Y and pos.Y <= btnPos.Y + btnSize.Y)
+                    local inOpt = (pos.X >= optPos.X and pos.X <= optPos.X + optSize.X and pos.Y >= optPos.Y and pos.Y <= optPos.Y + optSize.Y)
+
+                    if not inBtn and not inOpt then
+                        optionsContainer.Visible = false
+                    end
+                end)
+            end
         end)
         
         local multiDropdownObj = {
