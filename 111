@@ -657,10 +657,10 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         createNotification(title, content, duration)
     end
     
-    -- Outer Main Frame (Size: 750 x 560) - Obsidian Black (Positioned Right Side)
+    -- Outer Main Frame (Size: 750 x 560) - Obsidian Black (Positioned Right Side & Slightly Higher)
     local mainFrame = create("Frame", {
         Size = UDim2.new(0, 750, 0, 560),
-        Position = UDim2.new(0.65, -375, 0.5, -280),
+        Position = UDim2.new(0.65, -375, 0.45, -280),
         BackgroundColor3 = theme.MainFrameBG,
         BorderSizePixel = 0,
         Visible = true,
