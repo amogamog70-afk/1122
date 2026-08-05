@@ -233,14 +233,29 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     local registry = {}
     Window.Registry = registry
 
+    -- Anti-Multi Execution Protection: Automatically destroy previous running instances of Lunex Hub
+    pcall(function()
+        if getgenv().LunexHubRunningInstance then
+            pcall(function() getgenv().LunexHubRunningInstance:Destroy() end)
+        end
+        for _, oldGui in ipairs(parent:GetChildren()) do
+            if oldGui:IsA("ScreenGui") and oldGui:GetAttribute("LunexHubGui") == true then
+                pcall(function() oldGui:Destroy() end)
+            end
+        end
+    end)
+
     -- Main ScreenGui with randomized stealth name, realistic DisplayOrder, and executor protection
     local screenGui = create("ScreenGui", {
         ResetOnSpawn = false,
         DisplayOrder = math.random(12, 28),
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     })
+    screenGui:SetAttribute("LunexHubGui", true)
     protectScreenGui(screenGui)
     screenGui.Parent = parent
+    
+    getgenv().LunexHubRunningInstance = Window
     
     -- ====================================================================
     -- WATERMARK (LinoriaLib Style: DeadHub | fps 144 | ms 35 | PlayerName)
@@ -2989,6 +3004,39 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         return getSavedConfigs()
     end
 
+    -- Unlocks mouse cursor when mainFrame is open
+    local mouseConn = RunService.RenderStepped:Connect(function()
+        pcall(function()
+            if mainFrame and mainFrame.Visible then
+                UserInputService.MouseIconEnabled = true
+                if UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter or UserInputService.MouseBehavior == Enum.MouseBehavior.LockPosition then
+                    UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+                end
+            end
+        end)
+    end)
+
+    -- Roblox Esc Settings Menu Protection (Auto-Hide GUI when Esc Menu is open)
+    local GuiService = safeGetService(game, "GuiService")
+    local wasGuiEnabledBeforeEsc = true
+
+    local escOpenConn = GuiService.MenuOpened:Connect(function()
+        pcall(function()
+            if screenGui then
+                wasGuiEnabledBeforeEsc = screenGui.Enabled
+                screenGui.Enabled = false
+            end
+        end)
+    end)
+
+    local escCloseConn = GuiService.MenuClosed:Connect(function()
+        pcall(function()
+            if screenGui then
+                screenGui.Enabled = wasGuiEnabledBeforeEsc
+            end
+        end)
+    end)
+
     -- Toggle Window Visibility with Keybind (RightShift)
     local toggleConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
@@ -2998,10 +3046,16 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     
     function Window:Destroy()
         pcall(function()
+            if mouseConn then mouseConn:Disconnect() end
+            if escOpenConn then escOpenConn:Disconnect() end
+            if escCloseConn then escCloseConn:Disconnect() end
             if fpsConn then fpsConn:Disconnect() end
             if wmLoopTask then task.cancel(wmLoopTask) end
             if toggleConnection then toggleConnection:Disconnect() end
             if screenGui then screenGui:Destroy() end
+            if getgenv().LunexHubRunningInstance == Window then
+                getgenv().LunexHubRunningInstance = nil
+            end
         end)
     end
     Window.Destroy = Window.Destroy
