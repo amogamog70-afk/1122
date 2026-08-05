@@ -1612,12 +1612,12 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             -- Pixel Color Palette Popup (24 Color Grid with Purple Presets + HEX Input)
             local pickerPopup = create("Frame", {
                 Size = UDim2.new(0, 175, 0, 155),
-                Position = UDim2.new(1, 6, 0, 0),
+                Position = UDim2.new(0, 0, 0, 0),
                 BackgroundColor3 = theme.MainFrameBG,
                 BorderSizePixel = 0,
                 Visible = false,
-                ZIndex = 200,
-                Parent = pickerBtn
+                ZIndex = 2000,
+                Parent = screenGui
             })
             themeElements.MainFrameBGFills[pickerPopup] = true
             
@@ -1991,14 +1991,14 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         })
         
         local optionsContainer = create("Frame", {
-            Size = UDim2.new(1, 0, 0, 0),
-            Position = UDim2.new(0, 0, 1, 2),
+            Size = UDim2.new(0, 180, 0, 0),
+            Position = UDim2.new(0, 0, 0, 0),
             BackgroundColor3 = theme.MainFrameBG,
             BorderSizePixel = 0,
             Visible = false,
             ClipsDescendants = true,
-            ZIndex = 500,
-            Parent = mainBtn
+            ZIndex = 2000,
+            Parent = screenGui
         })
         themeElements.MainFrameBGFills[optionsContainer] = true
         
@@ -2052,9 +2052,17 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         rebuildOptions()
         
         mainBtn.MouseButton1Click:Connect(function()
-            local totalH = (#options * 20) + 8
-            optionsContainer.Size = UDim2.new(1, 0, 0, math.min(totalH, 140))
-            optionsContainer.Visible = not optionsContainer.Visible
+            pcall(function()
+                if activeColorPicker then activeColorPicker.Visible = false end
+                optionsContainer.Visible = not optionsContainer.Visible
+                if optionsContainer.Visible then
+                    local absPos = mainBtn.AbsolutePosition
+                    local absSize = mainBtn.AbsoluteSize
+                    local totalH = (#options * 20) + 8
+                    optionsContainer.Size = UDim2.new(0, absSize.X, 0, math.min(totalH, 140))
+                    optionsContainer.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 2)
+                end
+            end)
         end)
         
         local dropdownObj = {
@@ -2147,14 +2155,14 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
         themeElements.TextActiveLabels[btnText] = true
         
         local optionsContainer = create("Frame", {
-            Size = UDim2.new(1, 0, 0, 0),
-            Position = UDim2.new(0, 0, 1, 2),
+            Size = UDim2.new(0, 180, 0, 0),
+            Position = UDim2.new(0, 0, 0, 0),
             BackgroundColor3 = theme.MainFrameBG,
             BorderSizePixel = 0,
             Visible = false,
             ClipsDescendants = true,
-            ZIndex = 150,
-            Parent = mainBtn
+            ZIndex = 2000,
+            Parent = screenGui
         })
         themeElements.MainFrameBGFills[optionsContainer] = true
         
@@ -2431,12 +2439,12 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             
             local pickerPopup = create("Frame", {
                 Size = UDim2.new(0, 175, 0, 155),
-                Position = UDim2.new(1, 6, 0, 0),
+                Position = UDim2.new(0, 0, 0, 0),
                 BackgroundColor3 = theme.MainFrameBG,
                 BorderSizePixel = 0,
                 Visible = false,
-                ZIndex = 200,
-                Parent = pickerBtn
+                ZIndex = 2000,
+                Parent = screenGui
             })
             themeElements.MainFrameBGFills[pickerPopup] = true
             
@@ -2554,6 +2562,9 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                             pickerPopup.Visible = false
                             if activeColorPicker == pickerPopup then activeColorPicker = nil end
                         end
+                        local absPos = pickerBtn.AbsolutePosition
+                        local absSize = pickerBtn.AbsoluteSize
+                        pickerPopup.Position = UDim2.new(0, absPos.X + absSize.X + 6, 0, absPos.Y)
                         updateColor(currentColor)
                     else
                         if activeColorPicker == pickerPopup then activeColorPicker = nil end
