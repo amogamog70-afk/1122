@@ -838,47 +838,34 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             Parent = tabContentsContainer
         })
         
-        local leftCol = create("Frame", {
-            Size = UDim2.new(0.31, 0, 1, 0),
-            Position = UDim2.new(0, 0, 0, 0),
-            BackgroundTransparency = 1,
-            Parent = tabFrame
-        })
-        
-        local leftLayout = create("UIListLayout", {
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            HorizontalAlignment = Enum.HorizontalAlignment.Center,
-            Padding = UDim.new(0, 6),
-            Parent = leftCol
-        })
-        
-        local centerCol = create("Frame", {
-            Size = UDim2.new(0.31, 0, 1, 0),
-            Position = UDim2.new(0.345, 0, 0, 0),
-            BackgroundTransparency = 1,
-            Parent = tabFrame
-        })
-        
-        local centerLayout = create("UIListLayout", {
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            HorizontalAlignment = Enum.HorizontalAlignment.Center,
-            Padding = UDim.new(0, 6),
-            Parent = centerCol
-        })
-        
-        local rightCol = create("Frame", {
-            Size = UDim2.new(0.31, 0, 1, 0),
-            Position = UDim2.new(0.69, 0, 0, 0),
-            BackgroundTransparency = 1,
-            Parent = tabFrame
-        })
-        
-        local rightLayout = create("UIListLayout", {
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            HorizontalAlignment = Enum.HorizontalAlignment.Center,
-            Padding = UDim.new(0, 6),
-            Parent = rightCol
-        })
+        local function createScrollColumn(pos, size)
+            local col = create("ScrollingFrame", {
+                Size = size,
+                Position = pos,
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+                CanvasSize = UDim2.new(0, 0, 0, 0),
+                AutomaticCanvasSize = Enum.AutomaticSize.Y,
+                ScrollBarThickness = 3,
+                ScrollBarImageColor3 = theme.PrimaryAccent,
+                ScrollBarImageTransparency = 0.4,
+                ClipsDescendants = true,
+                Parent = tabFrame
+            })
+            themeElements.PrimaryAccentFills[col] = true
+
+            create("UIListLayout", {
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                HorizontalAlignment = Enum.HorizontalAlignment.Center,
+                Padding = UDim.new(0, 6),
+                Parent = col
+            })
+            return col
+        end
+
+        local leftCol = createScrollColumn(UDim2.new(0, 0, 0, 0), UDim2.new(0.31, 0, 1, 0))
+        local centerCol = createScrollColumn(UDim2.new(0.345, 0, 0, 0), UDim2.new(0.31, 0, 1, 0))
+        local rightCol = createScrollColumn(UDim2.new(0.69, 0, 0, 0), UDim2.new(0.31, 0, 1, 0))
         
         tabFrames[name] = {
             Frame = tabFrame,
@@ -1520,21 +1507,15 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
             end
             
             keybindBtn.MouseButton1Click:Connect(function()
-                if binding then return end
-
-                local now = os.clock()
-                if now - lastClickTime < 0.35 then
+                if binding then
+                    currentKey = Enum.UserInputType.MouseButton1
                     binding = false
-                    currentKey = nil
-                    keybindBtn.Text = "[NONE]"
                     keybindBtn.TextColor3 = theme.TextInactive
-                    Window:UpdateKeybindInList(text or "Toggle", "NONE", currentMode, false)
-                    if keyCallback then pcall(keyCallback, nil) end
-                    lastClickTime = 0
+                    updateKeybindDisplay(state)
+                    if keyCallback then pcall(keyCallback, currentKey) end
                     return
                 end
-                lastClickTime = now
-                
+
                 binding = true
                 keybindBtn.Text = "[...]"
                 keybindBtn.TextColor3 = theme.SecondaryAccent
@@ -1542,7 +1523,8 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                 
                 local conn
                 task.defer(function()
-                    conn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                    if not binding then return end
+                    conn = UserInputService.InputBegan:Connect(function(input)
                         if not binding then
                             if conn then conn:Disconnect() end
                             return
@@ -1739,6 +1721,8 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
 
                 sqBtn.MouseButton1Click:Connect(function()
                     updateColor(colorVal)
+                    pickerPopup.Visible = false
+                    if activeColorPicker == pickerPopup then activeColorPicker = nil end
                 end)
             end
 
@@ -1771,6 +1755,8 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                     if ok and parsedCol then
                         updateColor(parsedCol, true)
                         hexBox.Text = "#" .. parsedCol:ToHex():upper()
+                        pickerPopup.Visible = false
+                        if activeColorPicker == pickerPopup then activeColorPicker = nil end
                     end
                 end
             end)
@@ -1787,6 +1773,24 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
                             pickerPopup.Visible = false
                             if activeColorPicker == pickerPopup then activeColorPicker = nil end
                         end
+                        
+                        -- Dynamically calculate position right next to the picker button!
+                        local btnPos = pickerBtn.AbsolutePosition
+                        local btnSize = pickerBtn.AbsoluteSize
+                        local Camera = Workspace.CurrentCamera
+                        local viewSize = (Camera and Camera.ViewportSize) or Vector2.new(1920, 1080)
+                        
+                        local targetX = btnPos.X + btnSize.X + 6
+                        local targetY = btnPos.Y
+                        
+                        if targetX + 180 > viewSize.X then
+                            targetX = btnPos.X - 185
+                        end
+                        if targetY + 160 > viewSize.Y then
+                            targetY = viewSize.Y - 165
+                        end
+                        
+                        pickerPopup.Position = UDim2.new(0, math.max(10, targetX), 0, math.max(10, targetY))
                         updateColor(currentColor)
                     else
                         if activeColorPicker == pickerPopup then activeColorPicker = nil end
