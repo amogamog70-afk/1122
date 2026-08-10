@@ -85,14 +85,14 @@ local function getSafeParent()
         local ok, hui = pcall(get_hidden_gui)
         if ok and hui then return hui end
     end
+    if LocalPlayer then
+        local playerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui")
+        if playerGui then return playerGui end
+    end
     if CoreGui then
         local robloxGui = CoreGui:FindFirstChild("RobloxGui")
         if robloxGui then return robloxGui end
         return CoreGui
-    end
-    if LocalPlayer then
-        local playerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui")
-        if playerGui then return playerGui end
     end
     return nil
 end
@@ -894,6 +894,7 @@ function Library:CreateWindow(hubTitle, placeTitle, sectionTitle1, sectionTitle2
     end
     
     Window.Tabs = tabFrames
+    tabFrames["HvH"] = tabFrames["Rage"] or tabFrames[tabNames[1]]
     Window.LeftColumn = tabFrames[tabNames[1]].LeftColumn
     Window.CenterColumn = tabFrames[tabNames[1]].CenterColumn
     Window.RightColumn = tabFrames[tabNames[1]].RightColumn
