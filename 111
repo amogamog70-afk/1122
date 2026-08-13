@@ -1,5 +1,5 @@
 -- ================================================================= --
---                 VOLTCLIPS UI LIBRARY (NEVERLOSE CS2 STYLE)        --
+--                 VOLTCLIPS UI LIBRARY (BUILT-IN ICONS)             --
 -- ================================================================= --
 
 local TweenService = game:GetService("TweenService")
@@ -8,6 +8,15 @@ local CoreGui = game:GetService("CoreGui")
 
 local VoltClips = {}
 VoltClips.__index = VoltClips
+
+-- Встроенные иконки по названию
+local BuiltInIcons = {
+    ["Legit"]    = "rbxassetid://118624373632520",
+    ["HvH"]      = "rbxassetid://78242793290159",
+    ["Visuals"]  = "rbxassetid://16475825226",
+    ["World"]    = "rbxassetid://11887653877",
+    ["Movement"] = "rbxassetid://136160678435000"
+}
 
 -- Стильная палитра Neverlose 2.0
 local Theme = {
@@ -114,7 +123,7 @@ function VoltClips:CreateWindow(hubTitle)
     TabListLayout.Padding = UDim.new(0, 8)
     TabListLayout.Parent = TabList
 
-    -- Верхняя панель подвкладок (без поисковика)
+    -- Верхняя панель подвкладок
     local TopBar = Instance.new("Frame")
     TopBar.Name = "TopBar"
     TopBar.Size = UDim2.new(1, -60, 0, 35)
@@ -144,12 +153,20 @@ function VoltClips:CreateWindow(hubTitle)
     local Tabs = {}
     local PiecesToBreak = {}
 
-    -- Вкладки слева (с ИКОНКАМИ)
-    function Window:AddTab(iconAssetId)
+    -- Вкладки слева (С ВСТРОЕННЫМИ ИКОНКАМИ)
+    function Window:AddTab(tabName)
         local Tab = { SubTabs = {} }
 
-        local cleanId = tostring(iconAssetId):gsub("%D", "")
-        local imageUri = "rbxassetid://" .. cleanId
+        -- Определение иконки из встроенной таблицы
+        local imageUri = BuiltInIcons[tabName]
+        if not imageUri then
+            local cleanId = tostring(tabName):gsub("%D", "")
+            if #cleanId > 0 then
+                imageUri = "rbxassetid://" .. cleanId
+            else
+                imageUri = ""
+            end
+        end
 
         local TabBtn = Instance.new("ImageButton")
         TabBtn.Size = UDim2.new(0, 34, 0, 34)
@@ -161,7 +178,7 @@ function VoltClips:CreateWindow(hubTitle)
         TabBtn.AutoButtonColor = false
         TabBtn.Parent = TabList
         CreateCorner(TabBtn, 8)
-        local btnStroke = CreateStroke(TabBtn, Theme.CardStroke, 1, 0.6)
+        CreateStroke(TabBtn, Theme.CardStroke, 1, 0.6)
 
         Tab.Button = TabBtn
 
@@ -268,12 +285,11 @@ function VoltClips:CreateWindow(hubTitle)
                 CList.Padding = UDim.new(0, 6)
                 CList.Parent = Container
 
-                -- Исправление высоты карточки
                 CList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                     Card.Size = UDim2.new(1, 0, 0, CList.AbsoluteContentSize.Y + 32)
                 end)
 
-                -- 1. КНОПКА (Rounded Button)
+                -- 1. КНОПКА
                 function Section:AddButton(text, callback)
                     local Btn = Instance.new("TextButton")
                     Btn.Size = UDim2.new(1, 0, 0, 24)
@@ -331,7 +347,7 @@ function VoltClips:CreateWindow(hubTitle)
                     end)
                 end
 
-                -- 3. СЛАЙДЕР (Slider)
+                -- 3. СЛАЙДЕР
                 function Section:AddSlider(text, min, max, default, callback)
                     local val = default or min
 
@@ -393,7 +409,7 @@ function VoltClips:CreateWindow(hubTitle)
                     end)
                 end
 
-                -- 4. ТЕКСТБОКС (TextBox)
+                -- 4. ТЕКСТБОКС
                 function Section:AddTextBox(text, placeholder, callback)
                     local TBoxFrame = Instance.new("Frame")
                     TBoxFrame.Size = UDim2.new(1, 0, 0, 24)
